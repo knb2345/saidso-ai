@@ -38,7 +38,10 @@ export default function HeyKivi() {
   const [busy, setBusy] = useState(false);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [openTrace, setOpenTrace] = useState<number | null>(null);
-  const [openCite, setOpenCite] = useState<string | null>(null);
+  // Scoped to a turn: a bare id opened the same panel under every answer that happened
+  // to carry citations, because this block renders inside the turn map.
+  const [openCite, setOpenCite] = useState<{ turn: number; id: string } | null>(null);
+  const isOpenCite = (turn: number, id: string) => openCite?.turn === turn && openCite?.id === id;
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -170,7 +173,7 @@ export default function HeyKivi() {
                           <button
                             key={p.id}
                             className="chip kind-preference"
-                            onClick={() => setOpenCite(openCite === p.id ? null : p.id)}
+                            onClick={() => setOpenCite(isOpenCite(i, p.id) ? null : { turn: i, id: p.id })}
                           >
                             {p.statement}
                           </button>
@@ -191,7 +194,7 @@ export default function HeyKivi() {
                       <button
                         key={m.id}
                         className={`chip kind-${m.kind}`}
-                        onClick={() => setOpenCite(openCite === m.id ? null : m.id)}
+                        onClick={() => setOpenCite(isOpenCite(i, m.id) ? null : { turn: i, id: m.id })}
                       >
                         {m.statement}
                       </button>
@@ -200,14 +203,14 @@ export default function HeyKivi() {
                       <button
                         key={d.id}
                         className="chip dictation"
-                        onClick={() => setOpenCite(openCite === d.id ? null : d.id)}
+                        onClick={() => setOpenCite(isOpenCite(i, d.id) ? null : { turn: i, id: d.id })}
                       >
                         {new Date(d.spoken_at!).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                         {d.app ? ` · ${d.app}` : ''}
                       </button>
                     ))}
                   </div>
-                  {openCite && <CiteDetail id={openCite} onForget={forget} />}
+                  {openCite?.turn === i && <CiteDetail id={openCite.id} onForget={forget} />}
                 </div>
               )}
 
@@ -289,29 +292,52 @@ export default function HeyKivi() {
 }
 
 function CiteDetail({ id, onForget }: { id: string; onForget: (id: string) => void }) {
-  const [data, setData] = useState<any>(null);
+  /*
+   * The fetched payload is stored WITH the id it belongs to.
+   *
+   * Clicking a second chip changes the `id` prop, and React re-renders before the effect
+   * can refetch — so for one render the component held a memory response while `id` said
+   * dictation, took the dictation branch, and read `.spoken_at` off undefined. That threw
+   * a runtime error over the whole answer. Keying the payload to its id means a stale
+   * response is simply never rendered.
+   */
+  const [state, setState] = useState<{ id: string; data: any } | null>(null);
   const isMemory = id.startsWith('m_');
 
   useEffect(() => {
-    setData(null);
+    let cancelled = false;
+    setState(null);
     fetch(isMemory ? `/api/memories/${id}` : `/api/dictations/${id}`)
       .then((r) => r.json())
-      .then(setData);
+      .then((data) => {
+        if (!cancelled) setState({ id, data });
+      })
+      .catch(() => {
+        // A citation that cannot be loaded is worth saying plainly; it must never take
+        // the answer down with it.
+        if (!cancelled) setState({ id, data: { error: 'could not load this source' } });
+      });
+    // A slower earlier request must not overwrite the one the person is looking at.
+    return () => {
+      cancelled = true;
+    };
   }, [id, isMemory]);
 
-  if (!data) return <div className="detail">loading…</div>;
-  if (data.error) return <div className="detail">{data.error}</div>;
+  if (!state || state.id !== id) return <div className="detail">loading…</div>;
+  const data = state.data;
+  if (!data || data.error) return <div className="detail">{data?.error ?? 'could not load this source'}</div>;
 
   if (isMemory) {
+    if (!data.memory) return <div className="detail">this memory is no longer available</div>;
     return (
       <div className="detail">
         <div className="block">
-          <h3>{data.memory.kind} · known since {data.memory.first_seen_at.slice(0, 10)}</h3>
+          <h3>{data.memory.kind} · known since {String(data.memory.first_seen_at ?? '').slice(0, 10)}</h3>
           <div>{data.memory.statement}</div>
         </div>
         <div className="block">
           <h3>Where this came from</h3>
-          {data.evidence.map((e: any) => (
+          {(data.evidence ?? []).map((e: any) => (
             <div key={e.dictation_id}>
               <div className="equote">
                 <em>“{e.quote}”</em>
@@ -321,7 +347,7 @@ function CiteDetail({ id, onForget }: { id: string; onForget: (id: string) => vo
               </div>
             </div>
           ))}
-          {data.evidence.length === 0 && <div className="esrc">You told Kivi this directly.</div>}
+          {(data.evidence ?? []).length === 0 && <div className="esrc">You told Kivi this directly.</div>}
         </div>
         <button className="linkish" onClick={() => onForget(id)}>
           this is wrong — forget it
@@ -329,6 +355,8 @@ function CiteDetail({ id, onForget }: { id: string; onForget: (id: string) => vo
       </div>
     );
   }
+
+  if (!data.dictation) return <div className="detail">this dictation is no longer available</div>;
 
   return (
     <div className="detail">
