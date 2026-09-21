@@ -2,7 +2,7 @@
 
 ## What I noticed
 
-Most assistants with memory try to learn *you* — your tone, interests, and habits — so
+Most assistants with memory try to learn *you*, your tone, interests, and habits, so
 they can feel more personal. ChatGPT might notice that you prefer concise answers.
 
 Kivi does not need to infer any of that. It has something more useful. A normal assistant
