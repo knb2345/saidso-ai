@@ -1,5 +1,5 @@
 import { config } from './config';
-import { citationIds } from './history-time';
+import { citationIds, stripCitationIds } from './history-time';
 import { db, newId } from './db';
 import { generate, generationProvider, type GenContent } from './gemini';
 import { confirmMemory, createMemory, forgetMemory, getMemory } from './memory';
@@ -376,6 +376,10 @@ You are out of lookups. Answer now from what you already found, or say you could
   // empty. Those are real citations written in the wrong place, and discarding them makes
   // a well-sourced answer look unsupported, so they are recovered from the prose too.
   const inProse = citationIds((final.answer ?? '') + ' ' + (final.draft ?? ''));
+  // Read the ids for provenance, then take them out of what the person reads. The draft
+  // is stripped too: it gets pasted into Slack, where a row id is noise at best.
+  final.answer = stripCitationIds(final.answer ?? '');
+  if (final.draft) final.draft = stripCitationIds(final.draft);
   const memIds: string[] = [
     ...new Set([...(final.memory_ids ?? []), ...inProse.filter((i: string) => i.startsWith('m_'))]),
   ];

@@ -12,7 +12,7 @@ import { carriesCredential, prefilter } from '../src/lib/extract';
 import { ftsEscape } from '../src/lib/memory';
 import { localEmbed } from '../src/lib/localembed';
 import { cosine } from '../src/lib/gemini';
-import { citationIds, demoDateShift, evaluationTime } from '../src/lib/history-time';
+import { citationIds, stripCitationIds, demoDateShift, evaluationTime } from '../src/lib/history-time';
 import { config } from '../src/lib/config';
 import { db, ensureUser, migrate } from '../src/lib/db';
 import { insertDictation } from '../src/lib/ingest';
@@ -121,6 +121,21 @@ check('vectors are normalised', Math.abs(cosine(a, a) - 1) < 1e-5);
 check('citations are recovered from prose and deduplicated',
   citationIds('First (d_00007), then [d_00268]; memory m_abc123 supports d_00268.').join(',') === 'd_00007,d_00268,m_abc123');
 check('citation-like substrings inside another token are ignored', citationIds('notd_00007').length === 0);
+
+// Ids are provenance, not prose: harvested for citations, then removed from the text the
+// person reads. The chips already name each source by date and app.
+check('parenthesised ids are removed from the answer',
+  stripCitationIds('Farah traced it to their PAN endpoint (d_00203); Rahul fixed it (d_00484).')
+    === 'Farah traced it to their PAN endpoint; Rahul fixed it.');
+check('a parenthesis carrying real words survives',
+  stripCitationIds('The failure rate is under one percent (confirmed by email).')
+    === 'The failure rate is under one percent (confirmed by email).');
+check('bare ids in the middle of a sentence are removed',
+  stripCitationIds('Rahul owns the ledger migration d_00301 and it is due before launch.')
+    === 'Rahul owns the ledger migration and it is due before launch.');
+check('stripping does not disturb an answer with no ids',
+  stripCitationIds('You did not mention any enterprise pricing in your history.')
+    === 'You did not mention any enterprise pricing in your history.');
 
 const originalTime = '2026-08-30T17:48:00.000Z';
 const shifted = new Date(Date.parse(originalTime) + demoDateShift(originalTime, new Date('2026-09-12T03:00:00Z'))).toISOString();
