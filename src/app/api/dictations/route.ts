@@ -14,7 +14,19 @@ export async function GET(req: NextRequest) {
   const limit = Number(url.searchParams.get('limit') || 60);
 
   if (q || app) {
-    const found = await searchDictations({ userId, query: q, app, limit });
+    /*
+     * The person's own history page includes their personal dictations.
+     *
+     * Excluding them is right in the Hey Kivi retrieval path, so an unrelated question
+     * never surfaces a message about someone's health. It is wrong here: this page is
+     * the raw record, the person is looking at their own words on purpose, and browsing
+     * already showed those rows — so typing a search term made them silently disappear
+     * from a list they were just reading. Not learning from something and refusing to
+     * help someone find it are different decisions.
+     *
+     * Credentials stay excluded either way; searchDictations never returns 'secret'.
+     */
+    const found = await searchDictations({ userId, query: q, app, limit, includePersonal: true });
     return NextResponse.json({ dictations: found });
   }
   const rows = db()
