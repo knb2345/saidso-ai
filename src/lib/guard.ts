@@ -29,7 +29,7 @@ export function spendGuard(req: NextRequest): NextResponse | null {
     return NextResponse.json(
       {
         error:
-          'This shared demo has used its model budget for today. Everything Kivi already knows is still here to read on the other pages, and questions open again after midnight UTC.',
+          'This shared demo has used its model budget for today. Everything Saidso already knows is still here to read on the other pages, and questions open again after midnight UTC.',
         limited: true,
       },
       { status: 429 }

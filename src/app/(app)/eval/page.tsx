@@ -133,6 +133,7 @@ export default function EvalPage() {
   }
   const s = r.summary;
   const ablation = load('ablation.json');
+  const variance = load('variance.json');
   const cases: Case[] = [...r.cases].sort((a: Case, b: Case) => Number(a.passed) - Number(b.passed));
   const groups = Object.entries(s.cases.by_group as Record<string, { passed: number; total: number }>);
 
@@ -172,6 +173,15 @@ export default function EvalPage() {
           <div className="l">dictations in the corpus</div>
         </div>
       </div>
+
+      {variance && variance.runs.length > 1 && (
+        <p className="esrc" style={{ margin: '-14px 0 22px' }}>
+          Run to run: this configuration scored {variance.runs.map((r: any) => r.passed).join(', ')} of{' '}
+          {s.cases.total} across {variance.runs.length} runs.{' '}
+          {variance.always_fail.length > 0 && <>Failed every time: {variance.always_fail.join(', ')}. </>}
+          {variance.flaky.length > 0 && <>Changed between runs: {variance.flaky.join(', ')}.</>}
+        </p>
+      )}
 
       <h2>By what each group tests</h2>
       <div className="egroups">

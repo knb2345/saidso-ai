@@ -4,7 +4,7 @@ import type { Memory, MemoryKind } from './types';
 
 const STOP = new Set([
   'the', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'is', 'was', 'it', 'that', 'this',
-  'with', 'my', 'me', 'i', 'do', 'did', 'what', 'when', 'who', 'how', 'about', 'you', 'kivi', 'hey',
+  'with', 'my', 'me', 'i', 'do', 'did', 'what', 'when', 'who', 'how', 'about', 'you', 'kivi', 'saidso', 'hey',
   'can', 'please', 'tell', 'were', 'be', 'been', 'at', 'by', 'from', 'as', 'if', 'then', 'so', 'we',
   'they', 'he', 'she', 'his', 'her', 'their', 'our', 'not', 'no', 'yes', 'all', 'any', 'some', 'get',
   'got', 'have', 'has', 'had', 'am', 'are', 'again', 'there', 'here',

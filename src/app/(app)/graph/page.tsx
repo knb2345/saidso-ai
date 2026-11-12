@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { day } from '../time';
 
 /*
- * The entity graph Kivi's memories imply: who and what they are about, resolved across
+ * The entity graph Saidso's memories imply: who and what they are about, resolved across
  * spellings, and how those things relate. Every edge is a memory; every memory is one
  * click from the dictation that produced it.
  */
@@ -283,7 +284,7 @@ export default function GraphPage() {
     <div className="page wide">
       <h1>Knowledge graph</h1>
       <p className="lede">
-        The people, teams, systems and projects Kivi’s memories are about, with names resolved across
+        The people, teams, systems and projects Saidso’s memories are about, with names resolved across
         spellings and every relation traced to the memory, and the dictation, it came from. Drag to
         rearrange; click an entity to see what connects it.
       </p>
@@ -481,7 +482,7 @@ function EntityPanel({
       {node.aliases.length > 0 && <div className="esrc">also called {node.aliases.join(', ')}</div>}
       {node.summary && <p className="gsummary">{node.summary}</p>}
       <Link className="linkish" href={`/ask?q=${encodeURIComponent(`What do you know about ${node.name}?`)}`}>
-        ask Hey Kivi about {node.name} →
+        ask Hey Saidso about {node.name} →
       </Link>
       <h3 className="gh">{mine.length} relations</h3>
       <div className="grels">
@@ -527,7 +528,7 @@ function Evidence({ id }: { id: string }) {
   }, [id]);
   if (!d) return <div className="esrc">loading the source…</div>;
   if (d.error || !d.evidence) return <div className="esrc">source unavailable</div>;
-  if (d.evidence.length === 0) return <div className="esrc">You told Kivi this directly.</div>;
+  if (d.evidence.length === 0) return <div className="esrc">You told Saidso this directly.</div>;
   return (
     <div>
       {d.evidence.slice(0, 2).map((e: any) => (
@@ -536,7 +537,7 @@ function Evidence({ id }: { id: string }) {
             <em>“{e.quote}”</em>
           </div>
           <div className="esrc">
-            {new Date(e.spoken_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {e.app} ·{' '}
+            {day(e.spoken_at)} · {e.app} ·{' '}
             {e.dictation_id}
           </div>
         </div>

@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
   };
   insertDictation(dictation);
 
-  // Now the other direction: what, if anything, does this teach Kivi?
+  // Now the other direction: what, if anything, does this teach Saidso?
   let learned: any[] = [];
   let ignored: any[] = [];
   let sensitivity = 'work';

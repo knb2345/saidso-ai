@@ -32,7 +32,7 @@ export const config = {
   /**
    * The two workloads have opposite shapes, and the free tiers are limited on opposite
    * axes. Extraction is a hundred large batched calls — cheap on Groq's requests-per-day
-   * but far over its 8k tokens-per-minute ceiling. Hey Kivi is many small calls where
+   * but far over its 8k tokens-per-minute ceiling. Hey Saidso is many small calls where
    * latency is what the person feels. So each goes where its limit is not the binding
    * one, and either can be pinned explicitly.
    */
@@ -62,10 +62,10 @@ export const config = {
   // gemini: API only (fail loudly). local: never call the API for embeddings.
   embedProvider: ((process.env.KIVI_EMBED_PROVIDER || 'auto').trim()) as 'auto' | 'gemini' | 'local',
   defaultUserId: process.env.KIVI_USER_ID || 'u_demo',
-  // Retrieval floors: below these, Hey Kivi says it does not know.
+  // Retrieval floors: below these, Hey Saidso says it does not know.
   minMemoryScore: Number(process.env.KIVI_MIN_MEMORY_SCORE || 0.30),
   concurrency: Number(process.env.KIVI_INGEST_CONCURRENCY || 6),
-  // How much the model deliberates before answering. "low" keeps Hey Kivi quick enough
+  // How much the model deliberates before answering. "low" keeps Hey Saidso quick enough
   // to feel like speech; the work here is retrieval, not reasoning from scratch.
   thinkingLevel: (process.env.KIVI_THINKING_LEVEL || 'low').trim(),
   /**

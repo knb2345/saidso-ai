@@ -34,7 +34,7 @@ const SCENES: Scene[] = [
     raw: 'hey team um so just wanted to update you all that the merchant onboarding v two launch date is officially locked for the 14th of november',
     verdict: 'fact',
     memory: 'Merchant onboarding V2 launches on November 14.',
-    note: 'kept · a date someone will ask about again',
+    note: 'a date someone will ask about again',
   },
   {
     type: 'dictation',
@@ -43,7 +43,7 @@ const SCENES: Scene[] = [
     raw: 'hey team from now on can we make sure every standup update is written as three short bullets with no paragraphs and no greeting at the top please',
     verdict: 'preference',
     memory: 'Standup updates: three short bullets, no greeting.',
-    note: 'kept · a rule for how you want things written',
+    note: 'a rule for how she likes things written',
   },
   {
     type: 'dictation',
@@ -51,8 +51,8 @@ const SCENES: Scene[] = [
     where: 'message to sister',
     raw: 'hey di um my migraine came back so badly today … i managed to book a neurologist appointment for friday morning',
     verdict: 'refuse',
-    memory: 'Health',
-    note: 'not learned · still in your history, never a memory',
+    memory: 'A health message',
+    note: 'health is private: still findable in her messages, never learned',
   },
   {
     type: 'dictation',
@@ -61,17 +61,17 @@ const SCENES: Scene[] = [
     raw: 'hey team um the h d f c sandbox slipped again so we are officially pushing the v two launch to the 5th of december and this is final',
     verdict: 'supersede',
     memory: 'Merchant onboarding V2 launches on December 5.',
-    note: 'replaces November 14 · the old date is kept as history',
+    note: 'the date changed: November 14 is kept as history',
     replaces: 0,
   },
   {
     type: 'dictation',
     app: 'notes',
     where: 'note to self',
-    raw: 'um password for staging is kavatch pay ••••••••• let me just write it down so i don’t forget',
+    raw: 'um the staging password is •••••••••• let me just write it down so i don’t forget',
     verdict: 'refuse',
-    memory: 'Credential',
-    note: 'never learned · never repeated back',
+    memory: 'A password',
+    note: 'a password: never learned, never repeated back',
   },
   {
     type: 'ask',
@@ -178,10 +178,10 @@ function useClock() {
 }
 
 const VERDICT_LABEL: Record<Verdict, string> = {
-  fact: 'fact',
-  preference: 'preference',
-  supersede: 'fact · updated',
-  refuse: 'refused',
+  fact: 'remembered',
+  preference: 'remembered',
+  supersede: 'updated',
+  refuse: 'not remembered',
 };
 
 function Replay() {
@@ -189,7 +189,7 @@ function Replay() {
   const f = frameAt(t);
   const scene = SCENES[f.index];
   const listening = scene.type === 'dictation';
-  // The last dictation stays on screen while Kivi is being asked.
+  // The last dictation stays on screen while Saidso is being asked.
   const lastDictation = listening
     ? f.index
     : (SCENES.map((s, i) => (s.type === 'dictation' ? i : -1)).filter((i) => i >= 0).pop() as number);
@@ -199,20 +199,20 @@ function Replay() {
   const fadingOut = t > LOOP - 500;
 
   return (
-    <div className={`lp-replay${fadingOut ? ' out' : ''}`} aria-label="A replay of Kivi learning from dictations">
+    <div className={`lp-replay${fadingOut ? ' out' : ''}`} aria-label="A replay of Saidso learning from dictations">
       <div className="lp-replay-bar">
         <span className="lp-dots">
           <i />
           <i />
           <i />
         </span>
-        <span>replay · real records from the demo corpus</span>
+        <span>replay · messages from the demo</span>
       </div>
 
       <div className="lp-pane">
         <div className="lp-pane-head">
           <span>
-            <b>{d.app}</b> · {d.where}
+            <b>1 · Ananya says</b> · into {d.app}, {d.where}
           </span>
           <span className={`lp-wave${listening && f.phase === 'typing' ? ' on' : ''}`} aria-hidden>
             {Array.from({ length: 14 }).map((_, i) => (
@@ -224,7 +224,9 @@ function Replay() {
           {d.raw.slice(0, dTyped)}
           {listening && f.phase === 'typing' && <span className="lp-caret" />}
         </div>
-        <div className={`lp-verdict v-${d.verdict}${dVerdict ? ' show' : ''}`}>
+        {/* Keyed per message: reusing one element faded the old verdict out while already
+            showing the next message's text. */}
+        <div key={lastDictation} className={`lp-verdict v-${d.verdict}${dVerdict ? ' show' : ''}`}>
           <span className="lp-vtag">{VERDICT_LABEL[d.verdict]}</span>
           {d.note}
         </div>
@@ -233,7 +235,7 @@ function Replay() {
       <div className="lp-pane">
         <div className="lp-pane-head">
           <span>
-            <b>what kivi knows</b>
+            <b>2 · What Saidso remembers</b>
           </span>
           <span className="lp-count">{f.ledger.filter((l) => SCENES[l.scene].type === 'dictation' && (SCENES[l.scene] as any).verdict !== 'refuse' && !l.superseded).length} kept</span>
         </div>
@@ -244,10 +246,10 @@ function Replay() {
             return (
               <div key={l.scene} className={`lp-mem v-${s.verdict}${l.superseded ? ' old' : ''}`}>
                 <span className="lp-mkind">
-                  {s.verdict === 'refuse' ? '✕' : l.superseded ? 'was' : s.verdict === 'preference' ? 'pref' : 'fact'}
+                  {s.verdict === 'refuse' ? '✕' : l.superseded ? 'outdated' : s.verdict === 'preference' ? 'her style' : 'fact'}
                 </span>
                 <span className="lp-mtext">
-                  {s.verdict === 'refuse' ? `${s.memory} — not learned` : s.memory}
+                  {s.verdict === 'refuse' ? `${s.memory} — ignored` : s.memory}
                 </span>
               </div>
             );
@@ -258,11 +260,11 @@ function Replay() {
       <div className="lp-pane lp-askpane">
         <div className="lp-pane-head">
           <span>
-            <b>hey kivi</b>
+            <b>3 · Later, she asks Saidso</b>
           </span>
         </div>
         {!f.ask ? (
-          <div className="lp-empty">Ask anything once it has listened.</div>
+          <div className="lp-empty">A question is coming, once Saidso has listened…</div>
         ) : (
           (() => {
             const a = SCENES[f.ask.scene] as Extract<Scene, { type: 'ask' }>;
@@ -274,14 +276,14 @@ function Replay() {
                 </div>
                 {f.ask.phase === 'thinking' && (
                   <div className="lp-thinking">
-                    <span className="pulse" /> looking through your history…
+                    <span className="pulse" /> looking through her messages…
                   </div>
                 )}
                 {f.ask.phase === 'answer' && (
                   <div className="lp-a">
                     <div className={`lp-outcome ${a.outcome}`}>
                       <span className="dot" />
-                      {a.outcome === 'answered' ? 'from your history' : 'not in your history'}
+                      {a.outcome === 'answered' ? 'answered from her messages' : 'she never said this'}
                     </div>
                     <div className="lp-atext">{a.a}</div>
                     {a.chips.length > 0 && (
@@ -306,7 +308,7 @@ function Replay() {
 
 type Stats = {
   dictations: number;
-  evaluation: { passed: number; total: number; memoryPassed: number; memoryTotal: number; costPerQuestion: number; p50Ms: number } | null;
+  evaluation: { passed: number; total: number; runs: number[]; memoryPassed: number; memoryTotal: number; costPerQuestion: number; p50Ms: number } | null;
   memories: { fact: number; preference: number; superseded: number };
   decisions: { decision: string; c: number }[];
 };
@@ -345,9 +347,12 @@ function Numbers({ s }: { s: Stats | null }) {
       <div className="lp-eval">
         <span>
           <b>
-            {e.passed} / {e.total}
+            {Math.min(...e.runs) === Math.max(...e.runs)
+              ? e.passed
+              : `${Math.min(...e.runs)}–${Math.max(...e.runs)}`}{' '}
+            / {e.total}
           </b>{' '}
-          evaluation questions passed
+          evaluation questions passed{e.runs.length > 1 ? `, across ${e.runs.length} runs` : ''}
         </span>
         <span>
           <b>
@@ -386,18 +391,18 @@ export default function Intro() {
     <div className="lp">
       <header className="lp-nav">
         <Link href="/" className="lp-logo">
-          kiv<span>i</span>
+          saids<span>o</span>
         </Link>
         <nav>
           <a href="#how">How it works</a>
-          <a href="#trust">What it refuses</a>
+          <a href="#trust">Privacy</a>
           <Link href="/graph">Graph</Link>
           <Link href="/eval">Evaluation</Link>
-          <a href="https://github.com/knb2345/kivi-ai" target="_blank" rel="noreferrer">
-            Source
+          <a href="https://github.com/knb2345/saidso-ai/tree/live-demo" target="_blank" rel="noreferrer">
+            Code
           </a>
           <Link href="/ask" className="lp-btn small">
-            Open the app
+            Try it
           </Link>
         </nav>
       </header>
@@ -405,39 +410,71 @@ export default function Intro() {
       <section className="lp-hero">
         <div className="lp-hero-copy">
           <div className="lp-eyebrow">
-            <span className="lp-live" /> Semantic memory for voice dictation
+            <span className="lp-live" /> Saidso · live demo, no sign-up
           </div>
           <h1>
-            Kivi remembers
-            <br />
-            your <em>work</em>,<br />
-            not you.
+            The voice keyboard that <em>remembers your work</em>.
           </h1>
           <p className="lp-sub">
-            Every assistant remembers what you told it. Kivi remembers what you told everyone else —
-            the deadline you gave your team, the promise you made a partner, the decision you dictated
-            late at night.
+            Saidso is a dictation app: you speak, and it types your words into Slack, Gmail or any
+            other app. It also remembers the work details you mention, like deadlines, decisions and
+            who owns what, and deliberately ignores your health, money and passwords.
           </p>
           <p className="lp-sub2">
-            Ask it anything. It answers from your own words and shows you which ones, or tells you
-            that you never said it.
+            Weeks later, just ask: “when is the launch?” It answers from your own messages and
+            shows you which ones, or tells you honestly that you never said it.
           </p>
+          <div className="lp-persona">
+            <div className="lp-persona-k">Try it now, on a made-up example</div>
+            <div>
+              Meet <b>Ananya Rao</b>, an invented product manager whose team is launching a product
+              called V2. Saidso holds <b>499 work messages</b> she spoke over four months. Ask a
+              question the way she would and see which of her messages the answer came from. The
+              answers are not scripted.
+            </div>
+          </div>
           <div className="lp-ctas">
-            <Link href="/ask" className="lp-btn">
-              Talk to Hey Kivi <span aria-hidden>→</span>
+            <Link href={`/ask?q=${encodeURIComponent('When does V2 launch?')}`} className="lp-btn">
+              Ask it: “When does V2 launch?” <span aria-hidden>→</span>
             </Link>
-            <Link href="/memory" className="lp-btn ghost">
-              See what it remembered
+            <Link href="/ask" className="lp-btn ghost">
+              Ask your own question
             </Link>
           </div>
-          <p className="lp-fine">
-            Loaded with four months of one product manager’s dictations: 499 of them, across Slack,
-            Gmail, Linear, Notion and WhatsApp. The people and company are fictional; every answer
-            is computed live.
-          </p>
+          <p className="lp-fine">No sign-up. Type your question, or say it out loud in Chrome or Edge.</p>
         </div>
         <div className="lp-hero-demo">
+          <div className="lp-demo-cap">
+            Watch it work (25 seconds): five of Ananya’s messages go in, Saidso decides what to remember, then she asks a question.
+          </div>
           <Replay />
+        </div>
+      </section>
+
+      <section className="lp-three" aria-label="How it works in three steps">
+        <div className="lp-three-step">
+          <div className="lp-three-n">1</div>
+          <div>
+            <h3>You speak</h3>
+            <p className="lp-said">“um so the v two launch slipped to december fifth”</p>
+            <p>Saidso types it into Slack, cleaned up, like any voice keyboard.</p>
+          </div>
+        </div>
+        <div className="lp-three-step">
+          <div className="lp-three-n">2</div>
+          <div>
+            <h3>Saidso keeps what matters</h3>
+            <p className="lp-said">V2 launch: December 5 (was November 14)</p>
+            <p>Dates, owners, decisions, how you like things written. Never small talk, health or passwords.</p>
+          </div>
+        </div>
+        <div className="lp-three-step">
+          <div className="lp-three-n">3</div>
+          <div>
+            <h3>Later, you just ask</h3>
+            <p className="lp-said">“When does V2 launch?” → “December 5th.”</p>
+            <p>With the exact message it came from, so you can check it yourself.</p>
+          </div>
         </div>
       </section>
 
@@ -467,7 +504,7 @@ export default function Intro() {
             <h3>Change its mind properly</h3>
             <p>
               When a later dictation contradicts an earlier one, the newer claim wins and the older
-              one is kept as history, so Kivi can tell you what it used to believe and when that
+              one is kept as history, so Saidso can tell you what it used to believe and when that
               changed.
             </p>
           </div>
@@ -475,7 +512,7 @@ export default function Intro() {
             <div className="lp-n">04</div>
             <h3>Answer, or abstain</h3>
             <p>
-              Hey Kivi is an agent with seven tools over that memory, including a walk over an entity
+              Hey Saidso is an agent with seven tools over that memory, including a walk over an entity
               graph where names are resolved across spellings. It can only speak through a call that
               carries its citations, and when nothing supports an answer, it says so.
             </p>
@@ -521,7 +558,7 @@ export default function Intro() {
             <div className="lp-trygo">explore the graph →</div>
           </Link>
           <Link href="/memory" className="lp-trycard">
-            <div className="lp-tryq">What Kivi knows</div>
+            <div className="lp-tryq">What Saidso knows</div>
             <div className="lp-trywhy">
               Every memory as a plain sentence, how often you said it, what it replaced, and a
               one-tap way to correct or forget it.
@@ -568,7 +605,7 @@ export default function Intro() {
           </div>
           <div>
             <h3>It won’t touch your dictation.</h3>
-            <p>Memory feeds Hey Kivi only. The same sentence formats the same way next month.</p>
+            <p>Memory feeds Hey Saidso only. The same sentence formats the same way next month.</p>
           </div>
           <div>
             <h3>It won’t hide its working.</h3>
@@ -594,7 +631,7 @@ export default function Intro() {
         </div>
         <div className="lp-final">
           <Link href="/ask" className="lp-btn">
-            Open Kivi <span aria-hidden>→</span>
+            Open Saidso <span aria-hidden>→</span>
           </Link>
           <span className="lp-fine">
             Voice input works in Chrome and Edge. This is a shared demo: anything you teach it is
@@ -605,10 +642,10 @@ export default function Intro() {
 
       <footer className="lp-foot">
         <span>
-          kiv<span className="g">i</span>
+          saids<span className="g">o</span>
         </span>
         <span>Next.js · SQLite with FTS5 and vector search · Gemini</span>
-        <a href="https://github.com/knb2345/kivi-ai" target="_blank" rel="noreferrer">
+        <a href="https://github.com/knb2345/saidso-ai/tree/live-demo" target="_blank" rel="noreferrer">
           Source on GitHub
         </a>
       </footer>

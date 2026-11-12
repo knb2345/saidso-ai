@@ -17,7 +17,7 @@ export PYTHONIOENCODING=utf-8 PYTHONUTF8=1
 
 RG=${KIVI_RG:-kivi-demo-rg}
 LOC=${KIVI_LOCATION:-centralindia}
-APP=${KIVI_APP:-kivi}
+APP=${KIVI_APP:-saidso}
 ENVN=${KIVI_ENV:-kivi-env}
 CHAT_MODEL=${KIVI_CHAT_MODEL_DEPLOY:-gemini-3.5-flash-lite}
 # KIVI_TAG=<existing tag> skips the build and deploys an image already in the registry.
@@ -78,7 +78,7 @@ ENV_VARS=(
   KIVI_EXTRACT_PROVIDER=gemini
   "KIVI_CHAT_MODEL=$CHAT_MODEL"
   KIVI_EMBED_PROVIDER=auto
-  KIVI_RATE_PER_10MIN=20
+  KIVI_RATE_PER_10MIN=60   # generous: a whole office often shares one public IP
   KIVI_DAILY_CAP=1500
 )
 

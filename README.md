@@ -1,8 +1,8 @@
-# Kivi — semantic memory
+# Saidso — semantic memory
 
-**Kivi remembers your work, not you.**
+**Saidso remembers your work, not you.**
 
-This repository is a working end-to-end product: a voice-first interface (Hey Kivi) that
+This repository is a working end-to-end product: a voice-first interface (Hey Saidso) that
 answers questions about a person's own dictation history, a memory system that decides what
 is worth keeping from 500 dictations, and the evidence that both behave.
 
@@ -17,8 +17,8 @@ is worth keeping from 500 dictations, and the evidence that both behave.
 
 Five surfaces. The first four are for a normal person; the last is for us.
 
-**Hey Kivi (`/ask`)** — you ask, typed or out loud, and it answers from your own words. Every answer carries the
-memories and dictations it was built from as chips you can open, and a plain "how did Kivi
+**Hey Saidso (`/ask`)** — you ask, typed or out loud, and it answers from your own words. Every answer carries the
+memories and dictations it was built from as chips you can open, and a plain "how did Saidso
 get here?" link. When your history does not contain the answer, it says so instead of
 guessing, and the interface labels that turn *not in your history* rather than dressing it
 up as an answer.
@@ -30,17 +30,17 @@ memory writer so you can watch what was learned, which is usually nothing. Speec
 recognition is the browser's own where available, and typing is the same path otherwise —
 the brief does not ask for speech recognition, and nothing downstream depends on it.
 
-**What Kivi knows (`/memory`)** — the memory itself, written as sentences a person can read.
+**What Saidso knows (`/memory`)** — the memory itself, written as sentences a person can read.
 Each card shows how many times you said it, since when, and — one click away — the exact
 words that produced it. "Fix it" and "forget it" are on every card, and forgetting also
-works mid-conversation when Kivi gets something wrong in front of you. There is nothing to
+works mid-conversation when Saidso gets something wrong in front of you. There is nothing to
 configure: no consent screen, no retention settings, no administration.
 
 **Dictation history (`/history`)** — the raw material. For each dictation: what was sent,
-what the recogniser actually heard, what Kivi kept from it, and *what it decided not to
+what the recogniser actually heard, what Saidso kept from it, and *what it decided not to
 keep, with reasons*. That last section is the trust argument made visible.
 
-**Why (`/inspect`)** — the engineer's surface: every Hey Kivi turn with its retrieval
+**Why (`/inspect`)** — the engineer's surface: every Hey Saidso turn with its retrieval
 candidates and fused/vector/BM25 scores, which ones cleared the floor, the tool sequence,
 tokens, latency and cost; plus the most recent extraction decisions.
 
@@ -49,7 +49,7 @@ tokens, latency and cost; plus the most recent extraction decisions.
 Semantic memory **never touches regular dictation**. Dictation stays a fast, predictable
 path from speech to text governed by styles and phonetic memory. If memory could reach into
 it, the same sentence would come out differently on different days, and the person could not
-predict their own tool. Memory earns its place in Hey Kivi, where a question was asked and
+predict their own tool. Memory earns its place in Hey Saidso, where a question was asked and
 the reasoning can be shown. This is a product decision, and the code enforces it: nothing in
 the dictation path reads the `memories` table.
 
@@ -66,7 +66,7 @@ Three, chosen because they create value that a search box does not:
    word "synergy").
 
 And one non-capability that matters as much: **refusing**. Pricing, hiring plans and your
-last performance review are not in the history, and Kivi says so.
+last performance review are not in the history, and Saidso says so.
 
 ## Architecture
 
@@ -88,14 +88,14 @@ corpus (jsonl)
                           update → supersede (old kept as history)
          < 0.78         → create                                     [memory_evidence]
 
-Hey Kivi:  question → tools(recall, find_dictations, open_dictation, draft_text,
+Hey Saidso:  question → tools(recall, find_dictations, open_dictation, draft_text,
                             remember, forget) → respond(answer, outcome, citations)
            retrieval = dense (embeddings) ⊕ BM25 (FTS5), fused by RRF, weighted by
                        support count, confidence and (for episodes) recency
 ```
 
 The two model workloads have opposite shapes, so they are routed independently.
-Extraction is roughly a hundred large batched calls; Hey Kivi is many small ones where
+Extraction is roughly a hundred large batched calls; Hey Saidso is many small ones where
 latency is what the person feels. Free tiers are metered on opposite axes — Gemini by
 requests and tokens — and either workload can be configured with
 `KIVI_EXTRACT_PROVIDER` and `KIVI_CHAT_PROVIDER`. Both default to Gemini; Groq is an
@@ -104,7 +104,7 @@ embedder as the last resort. Every call records which model served it.
 
 ### Three layers, not one
 
-The distinction that makes the rest coherent is between what Kivi *kept* and what Kivi
+The distinction that makes the rest coherent is between what Saidso *kept* and what Saidso
 *learned*. They are different things with different rules, and conflating them is how a
 memory product ends up either useless or untrustworthy.
 
@@ -119,7 +119,7 @@ index             one episode per dictation: what it was, where it went, when.
       |
       v
 semantic memory   the small set of facts and preferences promoted because they will
-                  still matter in a month. This is what Kivi will act on and repeat.
+                  still matter in a month. This is what Saidso will act on and repeat.
 ```
 
 Only the third layer makes claims. That is why the transient content of a single
@@ -140,7 +140,7 @@ credential-bearing dictations do not produce episodes.
 
 ### Inference, not guessing
 
-Kivi is expected to combine things. The Truvia story takes three dictations across three
+Saidso is expected to combine things. The Truvia story takes three dictations across three
 weeks and no single message contains it; assembling that *is* the product. What it must
 not do is turn an assumption into a fact.
 
@@ -170,7 +170,7 @@ SQLite (`better-sqlite3`), schema and upgrades in `db/migrations/*.sql`:
   superseded / forgotten / confirmed)
 - `extraction_decisions` — every candidate and its fate, *including the rejected ones*
 - `model_calls` — tokens, latency and cost for every request the system makes
-- `conversations` / `turns` — every Hey Kivi turn with its full trace
+- `conversations` / `turns` — every Hey Saidso turn with its full trace
 
 Retrieval is a flat scan fused with FTS5. Exact combinations of query terms are ranked
 ahead of broad matches. Recall also follows the top fact statements into related source
@@ -191,7 +191,7 @@ spaces are never mixed. `npm run reindex` re-embeds with the API when quota retu
 
 ### Why an answer came out that way
 
-Every Hey Kivi turn stores its trace: the exact tool arguments, every retrieval candidate
+Every Hey Saidso turn stores its trace: the exact tool arguments, every retrieval candidate
 with its fused, vector and BM25 scores, whether it cleared `KIVI_MIN_MEMORY_SCORE`, the tool
 results, the rounds, tokens, latency and cost. A memory that *did not* influence a result
 appears in the trace as a candidate below the floor — the negative case is inspectable, not
@@ -213,7 +213,7 @@ The schedule — every date, app, style and subject — is deterministic and liv
 `scripts/corpus-plan.ts`; only the wording was generated (Gemini), which is what makes the
 ground truth ours. 22 records carry `planted` tags the evaluation asserts against: a launch
 date that moves mid-corpus, five stated preferences, a three-part incident story, metrics,
-decisions, and six records containing exactly the material Kivi must refuse to remember.
+decisions, and six records containing exactly the material Saidso must refuse to remember.
 
 Regenerate with `npm run corpus:generate` (the committed file is what the evaluation uses).
 
@@ -251,7 +251,7 @@ Ingesting 499 dictations produced 119 new memories, 30 reinforced and
 $0.076.
 
 Every group that tests a promise made in the vision passes: **supersession 2/2** (the
-launch date moved, Kivi answers with the new one and can still say what it used to
+launch date moved, Saidso answers with the new one and can still say what it used to
 believe), **privacy 4/4** including credentials and third parties, **preference 5/5**,
 **abstention 5/5**, **control 2/2** — which includes proving that forgetting takes effect —
 the flagship case, and all nine memory-state checks, among them that no memory was learned
@@ -261,7 +261,7 @@ Two failures remain, and both are retrieval preferring a more recent true source
 one the case names:
 
 - **`truvia-thread`** asks how the Truvia timeouts ended. The history holds more than one
-  Truvia incident, and Kivi answers about the most recent — a spike Rahul traced to a
+  Truvia incident, and Saidso answers about the most recent — a spike Rahul traced to a
   timeout — rather than the July resolution where the vendor moved PAN verification to a
   new endpoint. Both happened; the case wants the older one.
 - **`hdfc-status`** answers from the most recent HDFC update rather than the sandbox
@@ -285,22 +285,22 @@ This is exactly what a reviewer importing their own corpus would have hit. Dicta
 upserted in place now, and a memory-state check fails the evaluation if any inferred
 memory has lost its evidence.
 
-**A citation existed but did not support the answer.** Kivi answered "the V2 launch is set
+**A citation existed but did not support the answer.** Saidso answered "the V2 launch is set
 for December 5 2026" — correct — and cited a memory reading "Vikram mandated a freeze on
 everything for the HDFC launch". The answer was right and the citation was a real row, so
-every check passed. But a citation is how the person checks Kivi, and pointing them
+every check passed. But a citation is how the person checks Saidso, and pointing them
 somewhere unrelated makes an unsupported claim look sourced. Citations are now verified
 for support as well as existence.
 
 **Privacy leaked through episodes.** The memory writer refused to store facts about health
 or money, but an episode was written for *every* dictation, and an episode summarises the
-very content the rules exclude. Kivi had stored "the user sent a WhatsApp message to their
+very content the rules exclude. Saidso had stored "the user sent a WhatsApp message to their
 sister about having a migraine and booking a neurologist appointment". The decision now
 happens once, at extraction: a dictation classified personal produces no episode and no
 memories and is labelled in `/history`. It is excluded from ordinary searches, but the
 person can explicitly ask to retrieve their own source text. Credentials remain excluded.
 
-**Supersession missed contradictions.** Both launch dates stayed active at once and Kivi
+**Supersession missed contradictions.** Both launch dates stayed active at once and Saidso
 answered with the stale one. Reading was hybrid but *writing* was dense-only, so when the
 embedder scored two contradictory statements far apart, no adjudication happened. The
 older date came back third in the lexical ranking, behind two episodes about the same
@@ -313,7 +313,7 @@ now a distinct outcome, the interface refuses to claim a source it does not have
 thinking budget was reduced. The current measured latencies are in the evaluation report.
 
 Two failures were the evaluation's fault rather than the product's, and were corrected:
-assertions that banned words Kivi may legitimately quote while explaining a refusal
+assertions that banned words Saidso may legitimately quote while explaining a refusal
 ("never use Warm regards"; "I looked for salary and found nothing"), and free-text answers
 being recorded as refusals when they were correct and cited.
 
@@ -346,10 +346,10 @@ Written after running the thing, not before.
   The call ledger and evaluation report record usage; costs are estimates from the pricing
   table in `src/lib/config.ts`, not billing invoices.
 - **Forgetting removes the claim, not the record.** The evaluation demonstrates this: the
-  memory Kivi cited is deleted, the question asked again, and the memory is correctly no
+  memory Saidso cited is deleted, the question asked again, and the memory is correctly no
   longer used — but the fact comes back, re-derived from the dictation that produced it.
   That is the layering behaving as designed and it is the honest reading of "forget": a
-  memory is a claim Kivi will act on, and deleting it stops Kivi acting on it. The
+  memory is a claim Saidso will act on, and deleting it stops Saidso acting on it. The
   person's own words survive, because they are the person's own words. Erasing source
   history is a heavier action and this product does not offer it casually.
 - **The model is not judged by another model.** Assertions are deterministic — outcome,
@@ -399,7 +399,7 @@ src/lib/extract.ts                    what may be learned, and what may never be
 src/lib/ingest.ts                     the pipeline: prefilter → extract → reconcile
 src/lib/memory.ts                     create / reinforce / supersede / amend / forget
 src/lib/retrieve.ts                   hybrid retrieval, RRF, similarity for dedup
-src/lib/agent.ts                      Hey Kivi: tools, loop, citation verification, trace
+src/lib/agent.ts                      Hey Saidso: tools, loop, citation verification, trace
 src/app/                              the five surfaces + API routes
 scripts/corpus-plan.ts                the deterministic corpus schedule and ground truth
 scripts/generate-corpus.ts            corpus generation

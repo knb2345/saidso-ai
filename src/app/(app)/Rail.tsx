@@ -13,9 +13,9 @@ export default function Rail() {
   }, [path]);
 
   const items = [
-    { href: '/ask', label: 'Hey Kivi', count: null as string | null },
+    { href: '/ask', label: 'Hey Saidso', count: null as string | null },
     { href: '/dictate', label: 'Dictation', count: null },
-    { href: '/memory', label: 'What Kivi knows', count: stats ? String(stats.memories.active) : null },
+    { href: '/memory', label: 'What Saidso knows', count: stats ? String(stats.memories.active) : null },
     { href: '/graph', label: 'Knowledge graph', count: null },
     { href: '/history', label: 'Dictation history', count: stats ? String(stats.dictations) : null },
     { href: '/inspect', label: 'Why', count: null },
@@ -24,9 +24,9 @@ export default function Rail() {
 
   return (
     <aside className="rail">
-      <Link href="/" className="brand" title="What is Kivi?">
+      <Link href="/" className="brand" title="What is Saidso?">
         <div className="brand-mark">
-          kiv<span>i</span>
+          saids<span>o</span>
         </div>
         <div className="brand-sub">about</div>
       </Link>
@@ -41,8 +41,8 @@ export default function Rail() {
       </nav>
 
       <div className="rail-foot">
-        Dictation works the way it always did — styles and nothing else. Everything on these
-        pages reaches Hey&nbsp;Kivi only.
+        <b>Demo:</b> the memory of Ananya Rao, a made-up product manager. Everything here comes
+        from the 499 work messages she sent by voice. It resets every day.
       </div>
     </aside>
   );

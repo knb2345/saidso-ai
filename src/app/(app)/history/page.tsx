@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { stamp } from '../time';
 
 export default function HistoryPage() {
   const [q, setQ] = useState('');
@@ -24,8 +25,8 @@ export default function HistoryPage() {
     <div className="page wide">
       <h1>Dictation history</h1>
       <p className="lede">
-        Everything you have dictated, exactly as Kivi received it. This is the raw material — memory is
-        derived from it, never the other way round.
+        Everything you have dictated, exactly as Saidso received it. This is the raw material — memory is
+        derived from it, never the other way round. Times are in UTC, as Hey Saidso reads them.
       </p>
 
       <div className="filters">
@@ -41,9 +42,7 @@ export default function HistoryPage() {
         <div key={d.id}>
           <div className="drow" onClick={() => setOpen(open === d.id ? null : d.id)}>
             <span className="dtime">
-              {new Date(d.spoken_at).toLocaleString(undefined, {
-                month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-              })}
+              {stamp(d.spoken_at, false)}
             </span>
             <span className="dapp">{d.app}</span>
             <span className="dtext">
@@ -78,16 +77,16 @@ function DictationDetail({ id }: { id: string }) {
       </div>
       {data.dictation.sensitivity === 'personal' && (
         <div className="block">
-          <h3>Kept out of Hey Kivi</h3>
+          <h3>Kept out of Hey Saidso</h3>
           <div className="esrc">
-            Kivi recognised this as personal rather than working material, so it learned nothing
+            Saidso recognised this as personal rather than working material, so it learned nothing
             from it and will not use it to answer anything.
             {data.dictation.sensitivity_reason ? ` (${data.dictation.sensitivity_reason})` : ''}
           </div>
         </div>
       )}
       <div className="block">
-        <h3>What Kivi kept from this</h3>
+        <h3>What Saidso kept from this</h3>
         {data.memories.length === 0 && (
           <div className="esrc">Nothing. Not everything is worth remembering.</div>
         )}

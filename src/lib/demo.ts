@@ -7,7 +7,7 @@ import { closeDb, db, migrate } from './db';
  * The public demo.
  *
  * One seeded database is shared by everyone who opens the link, and every visitor can
- * teach Kivi something, correct it or make it forget. That is the product working — but
+ * teach Saidso something, correct it or make it forget. That is the product working — but
  * the next visitor should still meet the history as it was seeded. So when KIVI_DEMO_SEED
  * points at a pristine copy, the live file is restored from it at start-up and again
  * whenever the UTC date changes.
@@ -23,7 +23,7 @@ const midnight = (iso: string) => Date.parse(iso.slice(0, 10) + 'T00:00:00.000Z'
 // define where the corpus ends.
 const CORPUS_ONLY = `metadata_json NOT LIKE '%dictated_in_app%'
                  AND metadata_json NOT LIKE '%hey_kivi_request%'
-                 AND COALESCE(app,'') != 'hey kivi'`;
+                 AND COALESCE(app,'') NOT IN ('hey kivi', 'hey saidso')`;
 
 /** Shifts the corpus by whole UTC days so its newest record is yesterday. Returns the shift. */
 export function shiftCorpusDates(now = new Date()): number {

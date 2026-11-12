@@ -7,7 +7,7 @@ import { useSpeech } from '../useSpeech';
  *
  * The brief does not ask for speech recognition, and the memory system does not depend on
  * it — the corpus is replayed as text. But this is a voice-first product, and the thing
- * worth feeling is how raw the recogniser's output is compared with what Kivi writes down.
+ * worth feeling is how raw the recogniser's output is compared with what Saidso writes down.
  * The browser gives that for free where it is supported; elsewhere the textarea is the
  * same path, and everything downstream is identical either way.
  */

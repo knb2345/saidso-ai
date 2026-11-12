@@ -1,5 +1,5 @@
 /**
- * Asks Hey Kivi the intro page's starter questions once and stores the turns, exactly as the
+ * Asks Hey Saidso the intro page's starter questions once and stores the turns, exactly as the
  * API does, so the "Why" page has real traces to show the first visitor.
  *
  *   npx tsx scripts/warm.ts

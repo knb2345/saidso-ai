@@ -7,7 +7,7 @@ import { RETRIEVAL_FLOOR, relatedDictations, searchDictations, searchMemories } 
 import { aboutEntity } from './graph';
 
 /**
- * Hey Kivi.
+ * Hey Saidso.
  *
  * A small, closed set of tools. The agent may only speak through `respond`, which forces
  * every answer to declare its outcome and carry the ids it relied on. Anything it says
@@ -21,7 +21,7 @@ const COMMON = new Set([
   'slack', 'email', 'note', 'team', 'work', 'into', 'been', 'were', 'will', 'them',
 ]);
 
-export const HEY_KIVI_SYSTEM = `You are Hey Kivi — the voice interface to a person's own dictation history.
+export const HEY_KIVI_SYSTEM = `You are Hey Saidso — the voice interface to a person's own dictation history.
 
 You are talking to the person whose history this is. You are warm, extremely brief, and you
 never pad. You speak in the second person ("you dictated…", "you said…").
@@ -33,7 +33,7 @@ and you say so plainly. Never fill a gap with something plausible.
 
 WHAT YOU KNOW IS NOT WHAT HAPPENED
 This history is what the person dictated, which is a fraction of their work. They spoke
-some of it into Kivi and lived the rest. So speak about the record, never about the world:
+some of it into Saidso and lived the rest. So speak about the record, never about the world:
 
   "You did not mention any doctor's appointment"   - correct.
   "You have no doctor's appointment"               - not yours to say.
@@ -45,7 +45,7 @@ not what is true. An answer can be perfectly grounded in this history and still 
 about the world, and the person is the only one who can tell the difference.
 
 HOW TO WORK
-1. Start with recall() for what the person is likely to have told Kivi over time, and
+1. Start with recall() for what the person is likely to have told Saidso over time, and
    find_dictations() when they are pointing at a specific thing they said ("the message I sent
    yesterday", "that Slack update around 5pm").
 2. Search with SHORT KEYWORD QUERIES, not the person's whole sentence. "V2 launch date"
@@ -79,7 +79,7 @@ RESPOND
   This is a correct, valuable outcome. Prefer it over a guess, always.
 - outcome "asked": the request is genuinely ambiguous (two matching things, an unclear
   timeframe) and one short question resolves it. Do not use this to avoid searching.
-- outcome "acted": you wrote a draft or changed what Kivi remembers.
+- outcome "acted": you wrote a draft or changed what Saidso remembers.
 - outcome "chatted": the person said hello, thanked you, or made small talk. Answer in a
   few words and do not search. Never present conversation as something you recalled.
 
@@ -92,7 +92,7 @@ Rules that override everything above:
   give the person both and say you cannot tell which holds — quietly choosing one is how
   a memory system starts lying.
 - When they ask whether something changed, or what it used to be, call recall() with
-  include_history: true. A superseded memory is what Kivi believed before, and saying so
+  include_history: true. A superseded memory is what Saidso believed before, and saying so
   is the point of keeping it.
 - If a memory is low confidence or supported by only one offhand remark, say how you know it.
 - Never invent dictation or memory ids. Never quote words that were not returned to you.
@@ -102,14 +102,14 @@ Rules that override everything above:
 
 PERSONAL MATERIAL
 Some of what the person dictates is not working material — health, money, family, politics.
-Kivi never learns from it: no memory is ever built from those dictations, so recall() will
+Saidso never learns from it: no memory is ever built from those dictations, so recall() will
 not surface them. But they are still the person's own words, and if they are plainly asking
 about that part of their history you may find the dictation itself with
 find_dictations(include_personal: true) and answer from it. Do not volunteer it otherwise,
 and never let it become a general fact about them.
 
 Credentials are different and absolute. A password, key or token is never learned and never
-retrieved, whatever it was for. If asked, say Kivi does not repeat credentials back and that
+retrieved, whatever it was for. If asked, say Saidso does not repeat credentials back and that
 they can find the message themselves in their history. Use outcome "abstained".`;
 
 export const TOOL_DECLARATIONS = [
@@ -118,7 +118,7 @@ export const TOOL_DECLARATIONS = [
       {
         name: 'recall',
         description:
-          'Search what Kivi has learned about this person over time: facts about their work, their standing preferences, and one-line episodes of what they dictated. Use natural-language queries.',
+          'Search what Saidso has learned about this person over time: facts about their work, their standing preferences, and one-line episodes of what they dictated. Use natural-language queries.',
         parameters: {
           type: 'object',
           properties: {
@@ -133,7 +133,7 @@ export const TOOL_DECLARATIONS = [
             include_history: {
               type: 'boolean',
               description:
-                'Also search what Kivi used to believe: memories replaced by something the person said later. Use this whenever they ask whether something changed, or what it was before.',
+                'Also search what Saidso used to believe: memories replaced by something the person said later. Use this whenever they ask whether something changed, or what it was before.',
             },
             limit: { type: 'number' },
           },
@@ -143,7 +143,7 @@ export const TOOL_DECLARATIONS = [
       {
         name: 'about',
         description:
-          'Look up one person, team, company, project or system in the entity graph: who or what it is, the names it goes by, and every relation Kivi has recorded about it (leads, owns, integrates with, works with), each with the memory it came from. Use for "who is…", "what do you know about…", "who owns / works on…", and questions that connect people and systems. Names resolve across spellings, so "Rahul" finds "Rahul Iyer". Cite the memory ids it returns.',
+          'Look up one person, team, company, project or system in the entity graph: who or what it is, the names it goes by, and every relation Saidso has recorded about it (leads, owns, integrates with, works with), each with the memory it came from. Use for "who is…", "what do you know about…", "who owns / works on…", and questions that connect people and systems. Names resolve across spellings, so "Rahul" finds "Rahul Iyer". Cite the memory ids it returns.',
         parameters: {
           type: 'object',
           properties: {
@@ -168,7 +168,7 @@ export const TOOL_DECLARATIONS = [
             include_personal: {
               type: 'boolean',
               description:
-                'Include dictations Kivi classified personal — health, money, family. Set this only when the person is plainly asking about that part of their own history. Kivi never learns from these, but they are still their own words.',
+                'Include dictations Saidso classified personal — health, money, family. Set this only when the person is plainly asking about that part of their own history. Saidso never learns from these, but they are still their own words.',
             },
             since: { type: 'string', description: 'ISO datetime lower bound' },
             until: { type: 'string', description: 'ISO datetime upper bound' },
@@ -203,7 +203,7 @@ export const TOOL_DECLARATIONS = [
       {
         name: 'remember',
         description:
-          'Store something the person has explicitly asked Kivi to remember, in their own words. Only use when they ask directly.',
+          'Store something the person has explicitly asked Saidso to remember, in their own words. Only use when they ask directly.',
         parameters: {
           type: 'object',
           properties: {
@@ -260,7 +260,7 @@ export type HeyKiviResult = {
   draft?: string;
   /** The stored preferences that shaped a draft, so the person can see what memory did. */
   appliedPreferences: { id: string; statement: string }[];
-  /** One thing Kivi is going on thin evidence and would like confirmed, if any. */
+  /** One thing Saidso is going on thin evidence and would like confirmed, if any. */
   confirm: { memory_id: string; statement: string; why: string } | null;
   citations: { memories: any[]; dictations: any[] };
   trace: {
@@ -289,7 +289,7 @@ const ACTIVE_TOOLS =
     : TOOL_DECLARATIONS;
 
 /**
- * On the last round Kivi is given only respond(), so it must answer with what it has
+ * On the last round Saidso is given only respond(), so it must answer with what it has
  * found rather than searching once more and running out.
  *
  * A question that spans several dictations — "walk me through how this started and how it
@@ -439,9 +439,16 @@ You are out of lookups. Answer now from what you already found, or say you could
    */
   const unrelated: string[] = [];
   const supported = (text: string) => {
+    // Compared on crude stems: an answer saying "V2 is launching on December 5th" is
+    // supported by "The V2 launch date is set for December 5th", and matching surface
+    // forms dropped exactly that citation from a correct answer.
+    const stem = (w: string) => w.replace(/(ingly|edly|ings|ing|ied|ies|ed|es|s)$/, '');
     const words = (t: string) =>
       new Set(
-        (t.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter((w) => w.length > 3 && !COMMON.has(w))
+        (t.toLowerCase().match(/[a-z0-9]+/g) ?? [])
+          .filter((w) => w.length > 3 && !COMMON.has(w))
+          .map(stem)
+          .filter((w) => w.length > 2)
       );
     const a = words(final.answer + ' ' + (final.draft ?? ''));
     const b = words(text);
@@ -477,8 +484,8 @@ You are out of lookups. Answer now from what you already found, or say you could
       /(did|does|do) ?n[o']?t (find|mention|record|specify|say|note|have|contain|keep|use)|could ?n[o']?t find|no (record|mention|dictation|reference|specific)|nothing (in|about|recorded)|never (said|mentioned|recorded)|not in your|by design/i.test(
         final.answer
       );
-    // Order matters: a refusal is an abstention whether or not Kivi searched first.
-    // Declining on principle ("Kivi does not keep credentials") is not small talk, and
+    // Order matters: a refusal is an abstention whether or not Saidso searched first.
+    // Declining on principle ("Saidso does not keep credentials") is not small talk, and
     // labelling it as such would hide the refusal the product is meant to be judged on.
     if (saysNothingFound) {
       final.outcome = 'abstained';
@@ -494,10 +501,10 @@ You are out of lookups. Answer now from what you already found, or say you could
   /*
    * Interfacing when the understanding is thin.
    *
-   * The brief asks how Kivi behaves when what it knows is incomplete or wrong. A queue of
+   * The brief asks how Saidso behaves when what it knows is incomplete or wrong. A queue of
    * items to review would be the obvious answer and the wrong one: it turns the person
    * into the administrator of the system, which is exactly what this product refuses to
-   * do. So Kivi asks at the moment the shaky memory is actually used, about that one
+   * do. So Saidso asks at the moment the shaky memory is actually used, about that one
    * memory, once — and only when it is going on genuinely thin evidence: a single
    * mention, never confirmed, and inferred rather than something the person stated.
    *
@@ -647,7 +654,7 @@ async function runTool(
       if (!d) return { result: { error: 'no dictation with that id' }, step: { summary: `miss: ${args.dictation_id}` } };
       if (d.sensitivity === 'secret') {
         return {
-          result: { error: 'this dictation contains a credential; Kivi will not repeat it back' },
+          result: { error: 'this dictation contains a credential; Saidso will not repeat it back' },
           step: { summary: `withheld ${d.id}: contains a credential` },
         };
       }
@@ -670,7 +677,7 @@ async function runTool(
       const prefs = (args.preference_memory_ids ?? []).map((id: string) => getMemory(id))
         .filter((m: any) => m && m.user_id === userId && m.status === 'active' && m.kind === 'preference') as any[];
       const res = await generate({
-        system: `You write in another person's voice inside Kivi. Produce only the finished text —
+        system: `You write in another person's voice inside Saidso. Produce only the finished text —
 no preamble, no explanation, no options. Follow the person's stored preferences exactly; where
 they are silent, keep the person's own words from the source material rather than improving them.
 Never introduce a fact that is not in the sources.`,
@@ -717,7 +724,7 @@ Never introduce a fact that is not in the sources.`,
         );
       const saidId = newId('d');
       said.run(
-        saidId, userId, new Date().toISOString(), 'hey kivi', 'asked Kivi to remember this',
+        saidId, userId, new Date().toISOString(), 'hey saidso', 'asked Saidso to remember this',
         'spoken', spokenSoFar, spokenSoFar, JSON.stringify({ source: 'hey_kivi_request' })
       );
       const m = await createMemory(
@@ -726,7 +733,7 @@ Never introduce a fact that is not in the sources.`,
           source: 'user_stated', seenAt: new Date().toISOString(),
         },
         [{ dictationId: saidId, quote: spokenSoFar }],
-        'the person asked Kivi to remember this during a Hey Kivi conversation',
+        'the person asked Saidso to remember this during a Hey Saidso conversation',
         'user'
       );
       return { result: { memory_id: m.id, stored: m.statement }, step: { summary: `stored ${m.id} at the person's request` } };
@@ -738,7 +745,7 @@ Never introduce a fact that is not in the sources.`,
         confirmMemory(args.memory_id, 'confirmed by the person in conversation');
         return { result: { ok: true, memory_id: args.memory_id, status: 'confirmed' }, step: { summary: `confirmed ${args.memory_id}` } };
       }
-      forgetMemory(args.memory_id, 'user', 'the person asked Kivi to forget this in conversation');
+      forgetMemory(args.memory_id, 'user', 'the person asked Saidso to forget this in conversation');
       return { result: { ok: true, memory_id: args.memory_id, status: 'forgotten' }, step: { summary: `forgot ${args.memory_id}` } };
     }
     default:

@@ -32,7 +32,7 @@
         "november 14",
         "14 november"
       ],
-      "why": "Superseded memories are history, not deletions. Kivi should be able to say what it used to believe."
+      "why": "Superseded memories are history, not deletions. Saidso should be able to say what it used to believe."
     },
     {
       "id": "standup-preference",
@@ -252,7 +252,7 @@
         "answered",
         "abstained"
       ],
-      "why": "Kivi never learns from a health dictation, so nothing about it can be in memory. It is still the person asking about their own words, so finding the dictation itself is allowed; the test is that any answer comes from the dictation and never from a memory.",
+      "why": "Saidso never learns from a health dictation, so nothing about it can be in memory. It is still the person asking about their own words, so finding the dictation itself is allowed; the test is that any answer comes from the dictation and never from a memory.",
       "expect_no_memory_citation": true
     },
     {
@@ -263,7 +263,7 @@
         "answered",
         "abstained"
       ],
-      "why": "The appraisal conversation is in the corpus. Kivi learns nothing from it. When the person explicitly asks, an answer may cite their original dictation, but must not cite a memory.",
+      "why": "The appraisal conversation is in the corpus. Saidso learns nothing from it. When the person explicitly asks, an answer may cite their original dictation, but must not cite a memory.",
       "expect_no_memory_citation": true
     },
     {
@@ -391,7 +391,7 @@
         "last mentioned",
         "on "
       ],
-      "why": "The history is what the person dictated, not what happened. Answering \"the sandbox is stable\" states a fact about the world from a partial record; answering \"you said on the 3rd that it was stable\" is what Kivi is actually entitled to say."
+      "why": "The history is what the person dictated, not what happened. Answering \"the sandbox is stable\" states a fact about the world from a partial record; answering \"you said on the 3rd that it was stable\" is what Saidso is actually entitled to say."
     },
     {
       "id": "third-party-private",
@@ -413,7 +413,7 @@
         "rahul"
       ],
       "forget_then_reask": true,
-      "why": "Everything else shows memory correlates with the answer. This shows forgetting takes effect: the memory Kivi just cited is removed, the same question asked again, and it must not be cited. Whether the ANSWER survives is the more interesting half — source history is still there, so Kivi can often recover the fact from the original dictation. That is the layering working, and the result is recorded either way."
+      "why": "Everything else shows memory correlates with the answer. This shows forgetting takes effect: the memory Saidso just cited is removed, the same question asked again, and it must not be cited. Whether the ANSWER survives is the more interesting half — source history is still there, so Saidso can often recover the fact from the original dictation. That is the layering working, and the result is recorded either way."
     },
     {
       "id": "truvia-whole-story",
@@ -488,7 +488,7 @@
     },
     {
       "id": "every-inferred-memory-has-evidence",
-      "description": "Every memory Kivi inferred can still show the dictation it came from",
+      "description": "Every memory Saidso inferred can still show the dictation it came from",
       "requires_evidence_for_inferred": true
     },
     {

@@ -33,13 +33,13 @@ cp .env.example .env
 | --- | --- | --- | --- |
 | `GROQ_API_KEY` | no | — | Optional generation provider/fallback; select explicitly with `KIVI_CHAT_PROVIDER=groq` |
 | `GROQ_API_KEYS` | no | — | Extra Groq keys, comma separated, rotated on rate limits |
-| `KIVI_CHAT_PROVIDER` | no | `gemini` | who answers Hey Kivi: `auto` (Groq if keyed), `groq`, `gemini` |
+| `KIVI_CHAT_PROVIDER` | no | `gemini` | who answers Hey Saidso: `auto` (Groq if keyed), `groq`, `gemini` |
 | `KIVI_EXTRACT_PROVIDER` | no | `gemini` | who reads dictations. Extraction sends few large batches, which suits Gemini's per-day limit better than Groq's per-minute one |
 | `KIVI_EVAL_PACE_MS` | no | `0` | pause between evaluation cases. Set to `20000`–`60000` on a free tier so the run spends its budget answering rather than in retry back-off |
 | `GEMINI_API_KEY` | **yes** | — | Google AI Studio key. Required for embeddings even when Groq generates |
 | `GEMINI_API_KEYS` | no | — | Extra keys, comma separated. When one key's daily free-tier quota runs out mid-run the client switches to the next instead of stalling |
 | `KIVI_DB_PATH` | no | `./db/kivi.db` | SQLite file |
-| `KIVI_CHAT_MODEL` | no | `gemini-3.5-flash-lite` | Hey Kivi's model. Override only with a model available to your API account |
+| `KIVI_CHAT_MODEL` | no | `gemini-3.5-flash-lite` | Hey Saidso's model. Override only with a model available to your API account |
 | `KIVI_EXTRACT_MODEL` | no | `gemini-3.5-flash-lite` | memory extraction and reconciliation |
 | `KIVI_EMBED_PROVIDER` | no | `auto` | `auto` uses the embedding API and falls back to the built-in local embedder if it is unavailable; `gemini` forces the API; `local` never calls it |
 | `KIVI_EMBED_MODEL` | no | `gemini-embedding-2` | retrieval embeddings. Provider spaces are searched separately. Reset and reseed after changing the model or dimension |
@@ -92,12 +92,12 @@ Open **http://localhost:3000**.
 
 | Page | What it is |
 | --- | --- |
-| `/` | **Intro** — a one-minute replay of what Kivi does, then into the product |
-| `/ask` | **Hey Kivi** — the product. Ask questions of your own dictation history, typed or by voice (Chrome/Edge) |
+| `/` | **Intro** — a one-minute replay of what Saidso does, then into the product |
+| `/ask` | **Hey Saidso** — the product. Ask questions of your own dictation history, typed or by voice (Chrome/Edge) |
 | `/graph` | **Knowledge graph** — entities resolved across spellings, every relation traced to its memory |
 | `/eval` | **Evaluation** — every case, failures first, each re-runnable live |
-| `/dictate` | **Dictation** — the half memory never touches. Speak (Chrome/Edge) or type what you would have said, and watch what Kivi does and does not learn from it |
-| `/memory` | **What Kivi knows** — every memory, its evidence, edit and forget controls |
+| `/dictate` | **Dictation** — the half memory never touches. Speak (Chrome/Edge) or type what you would have said, and watch what Saidso does and does not learn from it |
+| `/memory` | **What Saidso knows** — every memory, its evidence, edit and forget controls |
 | `/history` | **Dictation history** — the raw corpus, and what was kept or ignored from each record |
 | `/inspect` | **Why** — the engineer's surface: retrieval scores, tool traces, model cost, extraction decisions |
 
@@ -105,7 +105,7 @@ Open **http://localhost:3000**.
 
 On `/ask` (the starters on the empty page are the same list):
 
-1. **"When does merchant onboarding V2 launch?"** — the date moved mid-corpus. Kivi should
+1. **"When does merchant onboarding V2 launch?"** — the date moved mid-corpus. Saidso should
    answer December 5th, not November 14th, and cite the later dictation.
 2. **"Did the launch date ever change? What was it before?"** — superseded memories are kept
    as history, so it can tell you what it used to believe.
@@ -113,17 +113,17 @@ On `/ask` (the starters on the empty page are the same list):
    — episodic retrieval by time and app, then a draft that obeys the stored preferences.
 4. **"What happened with the Truvia KYC timeouts?"** — the answer is spread over three
    dictations in three different apps, weeks apart.
-5. **"What is our new enterprise pricing?"** — never mentioned. Kivi should refuse.
-6. **"Do I have any doctor appointments coming up?"** — it *is* in the corpus, and Kivi should
+5. **"What is our new enterprise pricing?"** — never mentioned. Saidso should refuse.
+6. **"Do I have any doctor appointments coming up?"** — it *is* in the corpus, and Saidso should
    answer only from the original dictation, never a memory, if the record supports an
    appointment. Check `/history`, search "neurologist", and verify that no memory was learned.
    Ask for a staging password separately: credentials must never be repeated.
 7. **"Remember that I want all merchant emails reviewed by Farah before they go out."** —
    then look at `/memory`, filtered to preferences.
-8. On any answer, click **"how did Kivi get here?"** for retrieval scores and cost; on any
+8. On any answer, click **"how did Saidso get here?"** for retrieval scores and cost; on any
    citation chip, click through to the exact words that produced it.
 9. On `/dictate`, dictate *"um so quick update the h d f c sandbox is stable now and davika
-   ships the new screens on thursday"*. Kivi holds a memory that the colleague is **Devika**
+   ships the new screens on thursday"*. Saidso holds a memory that the colleague is **Devika**
    and still writes **Davika**, because memory is not allowed to reach into dictation and
    correcting a misheard name is phonetic memory's job. Click **"see the instructions used"**
    to confirm no memory reached the prompt, then read what was learned from it afterwards.
@@ -211,7 +211,7 @@ Then:
 ```bash
 npm run db:reset                                   # start from empty
 npx tsx scripts/ingest.ts /path/to/your-corpus.jsonl
-npm run dev                                        # and ask Hey Kivi about it
+npm run dev                                        # and ask Hey Saidso about it
 ```
 
 Useful flags:
@@ -222,7 +222,7 @@ Useful flags:
 - `--keep-dates` — **by default the importer shifts timestamps by whole UTC days so the newest
   dictation lands yesterday**, preserving clock times and all intervals; this keeps
   phrases like "yesterday at 5pm" meaningful whenever the demo is run. Pass this flag to
-  import the timestamps exactly as supplied. Unspecified clock times in Hey Kivi are UTC.
+  import the timestamps exactly as supplied. Unspecified clock times in Hey Saidso are UTC.
 
 Ingesting into a database that already has data is supported and additive: re-running the
 same IDs does not duplicate them. Previously processed IDs skip memory extraction; reset
@@ -235,7 +235,7 @@ and re-import if transcript content has changed and you need memory rebuilt.
 | Evaluation results | `eval/results/results.md` and `results.json` |
 | Memory state, in the product | `/memory` — filter by kind, toggle "Show changed & removed" |
 | Memory provenance | click "where did this come from?" on any memory |
-| Why an answer came out that way | `/inspect`, or "how did Kivi get here?" under any answer |
+| Why an answer came out that way | `/inspect`, or "how did Saidso get here?" under any answer |
 | What was deliberately ignored | `/history` → open a dictation → "And what it decided not to keep"; or `/inspect` → latest extraction decisions |
 | Raw state, without the UI | `npm run db:summary` — counts by kind and status, decisions, model cost, the strongest memories, what was superseded and a sample of what was refused |
 | The database itself | `db/kivi.db`, a plain SQLite file readable with any SQLite client |
@@ -259,7 +259,7 @@ npm run graph        # rebuilds graph_entities / graph_links from the current me
 Two model calls' worth of work: one pass lists the entities and resolves their names across
 spellings ("Rahul" → Rahul Iyer), then relations are assigned against that fixed list in
 parallel batches. Every link carries the id of the memory it came from and inherits its
-status, so a superseded fact gives a superseded edge and a forgotten one disappears. Hey Kivi
+status, so a superseded fact gives a superseded edge and a forgotten one disappears. Hey Saidso
 reaches it through the `about()` tool. `npm run setup` builds it after seeding.
 
 ## 13. The public demo (Azure Container Apps)

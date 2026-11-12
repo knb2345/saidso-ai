@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     /*
      * The person's own history page includes their personal dictations.
      *
-     * Excluding them is right in the Hey Kivi retrieval path, so an unrelated question
+     * Excluding them is right in the Hey Saidso retrieval path, so an unrelated question
      * never surfaces a message about someone's health. It is wrong here: this page is
      * the raw record, the person is looking at their own words on purpose, and browsing
      * already showed those rows — so typing a search term made them silently disappear

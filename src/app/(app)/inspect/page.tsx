@@ -35,7 +35,7 @@ export default function InspectPage() {
       <h1>Why</h1>
       <p className="lede">
         The state of the system and the reasoning behind every answer. Nothing on this page is needed
-        to use Kivi — it exists so that what the product claims can be checked.
+        to use Saidso — it exists so that what the product claims can be checked.
       </p>
 
       <div className="stats">
@@ -78,7 +78,7 @@ export default function InspectPage() {
         </tbody>
       </table>
 
-      <h2>Recent Hey Kivi turns</h2>
+      <h2>Recent Hey Saidso turns</h2>
       {data.turns.length === 0 && <div className="empty">No conversations yet.</div>}
       {data.turns.map((t: any) => (
         <details className="trace" key={t.id}>

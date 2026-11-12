@@ -32,7 +32,7 @@
 
 /* --- hero --- */
 .lp-hero {
-  max-width: 1200px; margin: 0 auto; padding: 56px 32px 88px;
+  max-width: 1200px; margin: 0 auto; padding: 56px 32px 48px;
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr); gap: 56px; align-items: center;
 }
 .lp-eyebrow {
@@ -42,7 +42,7 @@
 }
 .lp-live { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: p 1.6s ease-in-out infinite; }
 .lp-hero h1 {
-  font-size: clamp(40px, 5.6vw, 66px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 650;
+  font-size: clamp(36px, 4.8vw, 58px); line-height: 1.04; letter-spacing: -0.035em; font-weight: 650;
   margin: 24px 0 22px; text-wrap: balance;
 }
 .lp-section h2 { text-wrap: balance; }
@@ -55,6 +55,36 @@
 .lp-sub2 { font-size: 16px; line-height: 1.6; color: var(--muted); margin: 0 0 30px; max-width: 34em; }
 .lp-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 26px; }
 .lp-fine { font-size: 12.5px; color: var(--muted-2); line-height: 1.6; max-width: 40em; margin: 0; }
+
+/* --- who you are in the demo --- */
+.lp-persona {
+  display: flex; flex-direction: column; gap: 4px; margin: 0 0 26px; max-width: 34em;
+  padding: 13px 16px; border-radius: 12px; font-size: 14.5px; line-height: 1.55; color: var(--cream);
+  background: rgba(140, 226, 63, 0.06); border: 1px solid rgba(140, 226, 63, 0.28);
+}
+.lp-persona b { font-weight: 600; }
+.lp-persona-k { font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--green); }
+.lp-demo-cap { position: relative; z-index: 1; font-size: 13px; color: var(--muted); margin: 0 0 10px 4px; }
+
+/* --- three steps, in plain words --- */
+.lp-three {
+  max-width: 1200px; margin: 0 auto; padding: 8px 32px 64px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;
+}
+.lp-three-step {
+  display: flex; gap: 14px; padding: 20px 20px; border-radius: 16px;
+  background: var(--ink-2); border: 1px solid var(--line);
+}
+.lp-three-n {
+  flex: 0 0 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--green); color: var(--ink); font-weight: 700; font-size: 14px;
+}
+.lp-three h3 { margin: 3px 0 8px; font-size: 16.5px; font-weight: 600; }
+.lp-three p { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.lp-three p.lp-said {
+  font-family: var(--mono); font-size: 12.5px; color: var(--cream); margin-bottom: 8px;
+  padding: 7px 10px; border-radius: 8px; background: var(--ink); border: 1px solid var(--line);
+}
 
 /* --- the replay card --- */
 .lp-hero-demo { position: relative; }
@@ -124,7 +154,7 @@
 }
 @keyframes memIn { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: none; } }
 .lp-mkind {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; min-width: 30px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; min-width: 66px; white-space: nowrap;
   color: var(--green);
 }
 .lp-mem.v-preference .lp-mkind { color: #7fc7e8; }
@@ -215,12 +245,13 @@
 
 @media (max-width: 1020px) {
   .lp-hero { grid-template-columns: minmax(0, 1fr); gap: 44px; padding-top: 32px; }
+  .lp-three { grid-template-columns: minmax(0, 1fr); }
   .lp-steps, .lp-stats, .lp-try { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .lp-nav { padding: 16px; }
   .lp-nav nav a:not(.lp-btn) { display: none; }
-  .lp-hero, .lp-section { padding-left: 16px; padding-right: 16px; }
+  .lp-hero, .lp-section, .lp-three { padding-left: 16px; padding-right: 16px; }
   .lp-section { padding-top: 52px; padding-bottom: 52px; }
   .lp-steps, .lp-stats, .lp-try { grid-template-columns: minmax(0, 1fr); }
   .lp-stat-v { font-size: 36px; }

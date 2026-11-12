@@ -16,6 +16,7 @@
     "setup": "npm run db:reset && npm run seed && npm run graph",
     "graph": "tsx scripts/graph.ts",
     "demo:seed": "tsx scripts/build-seed.ts",
+    "smoke": "tsx scripts/smoke.ts",
     "db:summary": "tsx scripts/summary.ts",
     "reindex": "tsx scripts/reindex.ts",
     "test": "tsx scripts/test.ts"

@@ -4,10 +4,10 @@ import { logModelCall, type GenContent, type GenPart, type GenerateOpts, type Us
 /**
  * Groq as a generation backend.
  *
- * Kivi's memory design does not depend on any one model vendor, and relying on a single
+ * Saidso's memory design does not depend on any one model vendor, and relying on a single
  * free tier turned out to be the least reliable part of the whole system — a day's quota
  * would run out mid-ingest and leave the corpus half read. Groq speaks the OpenAI chat
- * shape, supports forced tool calls and JSON-schema output (the two things Hey Kivi and
+ * shape, supports forced tool calls and JSON-schema output (the two things Hey Saidso and
  * the memory writer actually require), and answers in a fraction of the time.
  *
  * It has no embedding endpoint, so retrieval vectors still come from Gemini or the local
@@ -161,7 +161,7 @@ export async function groqGenerate(opts: GenerateOpts): Promise<{ parts: GenPart
   if (tools) {
     body.tools = tools;
     // "required" is the same guarantee as Gemini's ANY: the model must answer through a
-    // tool, so Hey Kivi cannot speak except by calling respond().
+    // tool, so Hey Saidso cannot speak except by calling respond().
     if (opts.forceToolCall) body.tool_choice = 'required';
   }
   if (opts.jsonSchema) {
@@ -226,7 +226,7 @@ export async function groqGenerate(opts: GenerateOpts): Promise<{ parts: GenPart
  *
  * What must not happen is presenting a half-formed call as if it were speech: an early
  * version of this salvaged the arguments of a `find_dictations` call and showed the
- * person `"query": "staging password", "limit": 10` as Kivi's answer. So a recovered
+ * person `"query": "staging password", "limit": 10` as Saidso's answer. So a recovered
  * call is replayed as a call, and only `respond` can become text.
  */
 function salvageParts(failed: string | undefined, knownTools: Set<string>): GenPart[] | null {

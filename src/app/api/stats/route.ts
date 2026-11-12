@@ -41,8 +41,16 @@ export async function GET() {
 /** The headline numbers of the shipped evaluation run, so no page has to hard-code them. */
 function evalSummary() {
   try {
-    const r = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'eval', 'results', 'results.json'), 'utf8'));
+    const dir = path.join(process.cwd(), 'eval', 'results');
+    const r = JSON.parse(fs.readFileSync(path.join(dir, 'results.json'), 'utf8'));
+    let runs: number[] = [r.summary.cases.passed];
+    try {
+      runs = JSON.parse(fs.readFileSync(path.join(dir, 'variance.json'), 'utf8')).runs.map((x: any) => x.passed);
+    } catch {
+      /* a single run is all there is */
+    }
     return {
+      runs,
       passed: r.summary.cases.passed,
       total: r.summary.cases.total,
       memoryPassed: r.summary.memory_state.passed,

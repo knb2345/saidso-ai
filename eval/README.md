@@ -33,7 +33,7 @@ everything is not trustworthy — those cases are what keeps the rest honest.
 
 Every question case would score identically against a system that ignored its memory
 entirely and re-read the raw dictations each time. One case removes that doubt:
-`forgetting-takes-effect` answers a question, deletes the memory Kivi just cited, asks
+`forgetting-takes-effect` answers a question, deletes the memory Saidso just cited, asks
 again, and requires that memory not to be used — then restores it and records the
 restoration in the memory's own revision history, because an evaluation that mutates the
 database it is measuring is worthless the second time it runs.
@@ -62,7 +62,7 @@ are three different bugs with three different fixes.
 
 Run `npm run db:reset`, `npm run seed`, then `npm run eval` for a fresh corpus run.
 The evaluator freezes its clock to noon UTC on the day after the latest source dictation;
-Hey Kivi requests created during evaluation do not change that reference. The report saves
+Hey Saidso requests created during evaluation do not change that reference. The report saves
 this clock alongside actual execution time. The application continues using the real clock.
 The explicit-remember case creates a source record and memory; reset and seed again before
 comparing a fresh run. The forgetting case restores the memory it temporarily removes.

@@ -3,7 +3,7 @@
  *
  * Runs the complete pipeline — retrieval, tools, model, grounding checks — against the
  * corpus already in the database, and writes a result file where every case can be
- * inspected: the question, what was retrieved and at what score, what Kivi answered,
+ * inspected: the question, what was retrieved and at what score, what Saidso answered,
  * which memories and dictations it cited, and why the case passed or failed.
  *
  *   npx tsx scripts/eval.ts [--only=group-or-id] [--out=eval/results]
@@ -35,7 +35,7 @@ if (dictationCount === 0) {
 
 // Freeze relative dates to the source corpus so a saved database is still evaluable
 // tomorrow. User requests created by the evaluation must not advance that clock.
-const newest = (db().prepare("SELECT MAX(spoken_at) newest FROM dictations WHERE user_id = ? AND COALESCE(app, '') != 'hey kivi'").get(userId) as any).newest;
+const newest = (db().prepare("SELECT MAX(spoken_at) newest FROM dictations WHERE user_id = ? AND COALESCE(app, '') NOT IN ('hey kivi', 'hey saidso')").get(userId) as any).newest;
 const referenceTime = evaluationTime(newest);
 console.log(`Evaluation clock: ${referenceTime.toISOString()} (day after the latest source dictation)`);
 
@@ -160,7 +160,7 @@ for (const c of cases) {
   /*
    * Causality, not correlation.
    *
-   * Every other case would pass just as well if Kivi ignored its memory and read the raw
+   * Every other case would pass just as well if Saidso ignored its memory and read the raw
    * dictations each time. This one removes the memory it just cited, asks again, and
    * requires the answer to change — then puts the memory back, because an evaluation
    * that quietly mutates the database it is measuring is worthless on the second run.
@@ -188,7 +188,7 @@ for (const c of cases) {
     /*
      * What must be true is that the forgotten memory stops being used. Whether the
      * ANSWER changes is a different and more interesting question: source history is
-     * still there, so Kivi can often recover the same fact from the original dictation.
+     * still there, so Saidso can often recover the same fact from the original dictation.
      * The first version of this check compared answer strings and passed on a rewording,
      * which proved nothing at all — so it asserts the citation and reports the rest.
      */
@@ -210,7 +210,7 @@ for (const c of cases) {
       restored: Boolean(restored),
     };
     if (stillCited) {
-      failures.push(`${target.id} was forgotten and Kivi cited it anyway`);
+      failures.push(`${target.id} was forgotten and Saidso cited it anyway`);
     }
   }
 

@@ -1,16 +1,16 @@
 {
-  "ran_at": "2026-11-12T05:09:36.094Z",
+  "ran_at": "2026-11-12T06:00:22.767Z",
   "question": "does the entity-graph tool earn its place?",
   "how": "KIVI_GRAPH_TOOL=off npx tsx scripts/eval.ts",
-  "finding": "On this suite, no case changes either way: the same three fail with and without about(). Kivi reached for the graph on 4 of 34 questions, the ones about people, and answered those in fewer lookups; p90 latency and cost per question were slightly lower with it on this run. The suite predates the graph, so it asks few questions of the shape the graph is for (\"who owns the HDFC work?\"). That gap, not this table, is the honest next step.",
+  "finding": "No accuracy gain from the graph on this suite: 31/34 with it, 32/34 without. The difference is devika-screens, where the graph's relations steered Saidso to Devika's other assignments; in an earlier pair of runs it failed both ways, so it sits on the edge. Saidso reached for the graph on 3 of 34 questions, all about people. The suite predates the graph and asks few questions of the shape it is for (\"who owns the HDFC work?\"), so the honest reading is that it changes how people-questions are answered without yet being shown to improve them. Both variants ran at the same time, so compare their latencies with each other, not with the headline numbers.",
   "variants": [
     {
       "name": "with about() (deployed)",
       "passed": 31,
       "total": 34,
-      "p50_ms": 4525,
-      "p90_ms": 8194,
-      "cost_per_question": 0.001534,
+      "p50_ms": 7360,
+      "p90_ms": 17200,
+      "cost_per_question": 0.001701,
       "failed": [
         "truvia-thread",
         "devika-screens",
@@ -19,14 +19,13 @@
     },
     {
       "name": "without about()",
-      "passed": 31,
+      "passed": 32,
       "total": 34,
-      "p50_ms": 4318,
-      "p90_ms": 9820,
-      "cost_per_question": 0.001635,
+      "p50_ms": 6617,
+      "p90_ms": 19017,
+      "cost_per_question": 0.001729,
       "failed": [
         "truvia-thread",
-        "devika-screens",
         "hdfc-status"
       ]
     }

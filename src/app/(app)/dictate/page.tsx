@@ -44,7 +44,7 @@ export default function DictatePage() {
     <div className="page">
       <h1>Dictation</h1>
       <p className="lede">
-        The half of Kivi that memory never touches. Speech becomes text using the style you chose
+        The half of Saidso that memory never touches. Speech becomes text using the style you chose
         and nothing else, so the same sentence comes out the same way next month. What you dictate
         does feed memory afterwards; memory never feeds this. Speak into it, or type what you
         would have said.
@@ -105,7 +105,7 @@ export default function DictatePage() {
               <div className="raw">{result.raw}</div>
             </div>
             <div className="block">
-              <h3>What Kivi wrote · {result.dictation.style} · {result.dictation.app} · {result.formatMs}ms</h3>
+              <h3>What Saidso wrote · {result.dictation.style} · {result.dictation.app} · {result.formatMs}ms</h3>
               <div style={{ whiteSpace: 'pre-wrap' }}>{result.formatted}</div>
             </div>
             <div className="block" style={{ marginBottom: 0 }}>
@@ -124,8 +124,8 @@ export default function DictatePage() {
             <div className="block" style={{ marginBottom: result.ignored?.length ? 18 : 0 }}>
               <h3>
                 {result.sensitivity === 'work'
-                  ? 'What Kivi learned from it'
-                  : 'Kivi learned nothing from it'}
+                  ? 'What Saidso learned from it'
+                  : 'Saidso learned nothing from it'}
               </h3>
               {result.sensitivity !== 'work' && (
                 <div className="esrc">
@@ -134,7 +134,7 @@ export default function DictatePage() {
                 </div>
               )}
               {result.sensitivity === 'work' && result.learned?.length === 0 && (
-                <div className="esrc">Nothing worth keeping. Most dictations teach Kivi nothing.</div>
+                <div className="esrc">Nothing worth keeping. Most dictations teach Saidso nothing.</div>
               )}
               {result.learned?.map((m: any, i: number) => (
                 <div key={i} style={{ marginBottom: 8 }}>

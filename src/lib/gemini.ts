@@ -213,7 +213,7 @@ async function generateWithGemini(opts: GenerateOpts): Promise<{ parts: GenPart[
   };
   if (opts.system) body.systemInstruction = { parts: [{ text: opts.system }] };
   if (opts.tools) body.tools = opts.tools;
-  // ANY forces the model to call one of the declared functions. Hey Kivi can then say
+  // ANY forces the model to call one of the declared functions. Hey Saidso can then say
   // "respond() is the only way to speak" as a fact about the request, not a hope about
   // the prompt — a model that answers in free text carries no outcome and no citations.
   if (opts.forceToolCall) body.toolConfig = { functionCallingConfig: { mode: 'ANY' } };

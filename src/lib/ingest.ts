@@ -366,7 +366,7 @@ export async function ingest(
         .run(res.sensitivity, res.sensitivity_reason ?? 'recognised as personal rather than working material', d.id);
       decision(
         runId, d.id, { sensitivity: 'personal' }, 'rejected',
-        `personal, not working material: ${res.sensitivity_reason ?? 'no memory written and Hey Kivi will not retrieve it'}`
+        `personal, not working material: ${res.sensitivity_reason ?? 'no memory written and Hey Saidso will not retrieve it'}`
       );
       stats.personal++;
       continue;

@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * The browser's own speech recognition (Chrome, Edge), shared by Dictation and Hey Kivi.
+ * The browser's own speech recognition (Chrome, Edge), shared by Dictation and Hey Saidso.
  *
  * `onTranscript` streams the running transcript — settled words plus whatever the
  * recogniser currently believes — so the box shows exactly what it heard. `onEnd` fires
- * once when listening stops with something heard and no error, which is how Hey Kivi sends
+ * once when listening stops with something heard and no error, which is how Hey Saidso sends
  * a spoken question without a second click.
  */
 export function useSpeech(opts: {

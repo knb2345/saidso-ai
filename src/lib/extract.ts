@@ -4,9 +4,9 @@ import type { Candidate, Dictation } from './types';
 const NL = String.fromCharCode(10);
 
 /**
- * What Kivi is allowed to learn from a dictation.
+ * What Saidso is allowed to learn from a dictation.
  *
- * The position: Kivi remembers a person's *work*, not the person. It keeps
+ * The position: Saidso remembers a person's *work*, not the person. It keeps
  *   - facts       : durable, checkable things about the work (names, dates, decisions, numbers)
  *   - preferences : how this person wants language and output produced
  *   - episodes    : one row per dictation, so "the thing I sent at 5pm" is findable
@@ -14,9 +14,9 @@ const NL = String.fromCharCode(10);
  * finances, relationships, politics, religion, or other people's private lives.
  */
 
-export const EXTRACTION_SYSTEM = `You are the memory writer inside Kivi, a voice-first dictation product.
+export const EXTRACTION_SYSTEM = `You are the memory writer inside Saidso, a voice-first dictation product.
 
-You read one dictation a person spoke into Kivi and decide what — if anything — is worth
+You read one dictation a person spoke into Saidso and decide what — if anything — is worth
 remembering for months. You are conservative by default. An empty result is a good result.
 
 WRITE A MEMORY ONLY IF it will still be useful weeks from now and it is stated, not guessed.
@@ -77,8 +77,8 @@ a month" is a business figure and is kept. "My hike was fifteen percent" is the 
 own money and is not. Otherwise set it to "work".
 
 A dictation marked "personal" gets NO episode summary and NO memories — return an empty
-episode summary and an empty memories list for it, and say why in sensitivity_reason. Kivi
-keeps the person's dictation but does not learn from it. Hey Kivi may retrieve personal
+episode summary and an empty memories list for it, and say why in sensitivity_reason. Saidso
+keeps the person's dictation but does not learn from it. Hey Saidso may retrieve personal
 source text only when the person asks about it; credential values are never retrieved.
 This matters more than being helpful: a personal message the person happened to dictate is
 not working material.
@@ -171,7 +171,7 @@ export type ExtractionResult = {
  * A deterministic screen for secrets, applied regardless of what the model decided.
  *
  * The classifier reasonably read "here is the staging password for the test account" as
- * working material — it is about work — and Kivi then recited the password back when
+ * working material — it is about work — and Saidso then recited the password back when
  * asked. Judgement is the wrong and only line of defence for this one category: the cost
  * of missing a credential is unbounded, the cost of over-excluding a dictation is that
  * one message is not learned from. So a pattern match overrides the model here, and only
@@ -296,7 +296,7 @@ function overlapRatio(quote: string, haystack: string): number {
 }
 
 /** Used only when a new candidate is close to something already stored. */
-export const RECONCILE_SYSTEM = `You maintain a person's long-term memory in Kivi.
+export const RECONCILE_SYSTEM = `You maintain a person's long-term memory in Saidso.
 
 You are given one EXISTING memory and one NEW candidate that are textually similar.
 Decide the relationship:

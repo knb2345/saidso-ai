@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useSpeech } from '../useSpeech';
+import { stamp } from '../time';
 
 type Citation = { id: string; kind?: string; statement?: string; formatted?: string; spoken_at?: string; app?: string };
 
@@ -112,7 +113,7 @@ export default function HeyKivi() {
     await fetch(`/api/memories/${memoryId}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action, reason: 'the person answered when Kivi asked mid-conversation' }),
+      body: JSON.stringify({ action, reason: 'the person answered when Saidso asked mid-conversation' }),
     });
     setTurns((t) =>
       t.map((turn, i) =>
@@ -125,7 +126,7 @@ export default function HeyKivi() {
     await fetch(`/api/memories/${memoryId}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'forget', reason: 'the person said this was wrong while talking to Hey Kivi' }),
+      body: JSON.stringify({ action: 'forget', reason: 'the person said this was wrong while talking to Hey Saidso' }),
     });
     setTurns((t) => [
       ...t,
@@ -137,11 +138,17 @@ export default function HeyKivi() {
     <div className="page">
       {turns.length === 0 && (
         <>
-          <h1>Hey Kivi</h1>
+          <h1>Hey Saidso</h1>
           <p className="lede">
-            Ask about anything you have dictated. Kivi answers from your own history — and tells you when
-            your history does not contain the answer.
+            Ask about anything in the messages you dictated. Saidso answers from your own words and shows
+            where each answer came from, or tells you plainly that you never said it.
           </p>
+          <div className="persona">
+            This is the memory of <b>Ananya Rao</b>, a product manager at a made-up payments company:
+            the <b>499 work messages</b> she sent by voice over four months, in Slack, Gmail, Linear,
+            Notion and WhatsApp. Ask the way she would (“what did I decide about…”), typed or out
+            loud, or pick a question below.
+          </div>
           <div className="starters">
             {STARTERS.map((s) => (
               <button key={s} className="starter" onClick={() => ask(s)}>
@@ -229,7 +236,7 @@ export default function HeyKivi() {
                         className="chip dictation"
                         onClick={() => setOpenCite(isOpenCite(i, d.id) ? null : { turn: i, id: d.id })}
                       >
-                        {new Date(d.spoken_at!).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                        {stamp(d.spoken_at, false)}
                         {d.app ? ` · ${d.app}` : ''}
                       </button>
                     ))}
@@ -258,8 +265,8 @@ export default function HeyKivi() {
                 <div className="checkin">
                   <div className="checkin-why">
                     {t.settled === 'confirmed'
-                      ? 'Noted — Kivi will rely on that now.'
-                      : 'Forgotten. Kivi will not use it again.'}
+                      ? 'Noted — Saidso will rely on that now.'
+                      : 'Forgotten. Saidso will not use it again.'}
                   </div>
                 </div>
               )}
@@ -267,7 +274,7 @@ export default function HeyKivi() {
               {t.trace && (
                 <div className="turn-tools">
                   <button className="linkish" onClick={() => setOpenTrace(openTrace === i ? null : i)}>
-                    {openTrace === i ? 'hide how Kivi got here' : 'how did Kivi get here?'}
+                    {openTrace === i ? 'hide how Saidso got here' : 'how did Saidso get here?'}
                   </button>
                   <span style={{ fontSize: 11.5, color: 'var(--muted-2)' }}>
                     {(t.trace.totalMs / 1000).toFixed(1)}s · {t.trace.steps.length} lookups ·{' '}
@@ -293,7 +300,7 @@ export default function HeyKivi() {
           <textarea
             rows={1}
             value={input}
-            placeholder={speech.listening ? 'Listening — ask out loud…' : 'Hey Kivi…'}
+            placeholder={speech.listening ? 'Listening — ask out loud…' : 'Hey Saidso…'}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -340,7 +347,7 @@ export default function HeyKivi() {
           {speech.error
             ? speech.error
             : speech.listening
-              ? 'Speak naturally. Tap the bars when you are done and Kivi sends it.'
+              ? 'Speak naturally. Tap the bars when you are done and Saidso sends it.'
               : speech.supported
                 ? 'Type, or tap the mic and ask out loud. Dictation itself is unchanged — memory never touches it.'
                 : 'Type your question. Voice input works in Chrome and Edge.'}
@@ -402,11 +409,11 @@ function CiteDetail({ id, onForget }: { id: string; onForget: (id: string) => vo
                 <em>“{e.quote}”</em>
               </div>
               <div className="esrc">
-                {new Date(e.spoken_at).toLocaleString()} · {e.app} · {e.dictation_id}
+                {stamp(e.spoken_at)} · {e.app} · {e.dictation_id}
               </div>
             </div>
           ))}
-          {(data.evidence ?? []).length === 0 && <div className="esrc">You told Kivi this directly.</div>}
+          {(data.evidence ?? []).length === 0 && <div className="esrc">You told Saidso this directly.</div>}
         </div>
         <button className="linkish" onClick={() => onForget(id)}>
           this is wrong — forget it
@@ -421,7 +428,7 @@ function CiteDetail({ id, onForget }: { id: string; onForget: (id: string) => vo
     <div className="detail">
       <div className="block">
         <h3>
-          {new Date(data.dictation.spoken_at).toLocaleString()} · {data.dictation.app}
+          {stamp(data.dictation.spoken_at)} · {data.dictation.app}
         </h3>
         <div>{data.dictation.formatted}</div>
       </div>
@@ -437,7 +444,7 @@ function TraceView({ trace }: { trace: any }) {
   return (
     <div className="detail">
       <div className="block">
-        <h3>What Kivi did</h3>
+        <h3>What Saidso did</h3>
         {trace.steps.map((s: any, i: number) => (
           <div className="step" key={i}>
             <div className="step-name">

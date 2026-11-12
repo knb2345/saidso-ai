@@ -273,7 +273,7 @@ export function loadGraph(userId = config.defaultUserId): { nodes: GraphNode[]; 
 }
 
 /**
- * Hey Kivi's view of one entity: who or what it is, every relation it takes part in, and
+ * Hey Saidso's view of one entity: who or what it is, every relation it takes part in, and
  * the memories behind them. Names resolve through aliases, so "Rahul" finds Rahul Iyer.
  */
 export function aboutEntity(userId: string, name: string, includeHistory = false) {

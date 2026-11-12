@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { stamp } from '../time';
 
 type Memory = {
   id: string;
@@ -49,11 +50,11 @@ export default function MemoryPage() {
 
   return (
     <div className="page">
-      <h1>What Kivi knows</h1>
+      <h1>What Saidso knows</h1>
       <p className="lede">
         Everything here was learned from something you dictated, and every line can be traced back to
         the words you said. Nothing here changes how dictation works — it is only used when you ask
-        Hey Kivi for something.
+        Hey Saidso for something.
       </p>
 
       <div className="filters">
@@ -70,7 +71,7 @@ export default function MemoryPage() {
 
       {loading && <div className="empty">reading…</div>}
       {!loading && memories.length === 0 && (
-        <div className="empty">Nothing here yet. Kivi only remembers what you have actually said.</div>
+        <div className="empty">Nothing here yet. Saidso only remembers what you have actually said.</div>
       )}
 
       {memories.map((m) => (
@@ -139,7 +140,7 @@ function MemoryCard({
       {open && (
         <div className="evidence">
           <div className="esrc" style={{ marginBottom: 6 }}>
-            {evidence.length ? 'Kivi learned this from:' : 'You told Kivi this directly.'}
+            {evidence.length ? 'Saidso learned this from:' : 'You told Saidso this directly.'}
           </div>
           {evidence.map((e: any) => (
             <div key={e.dictation_id}>
@@ -147,7 +148,7 @@ function MemoryCard({
                 <em>“{e.quote}”</em>
               </div>
               <div className="esrc">
-                {new Date(e.spoken_at).toLocaleString()} · {e.app} · {e.dictation_id}
+                {stamp(e.spoken_at)} · {e.app} · {e.dictation_id}
               </div>
             </div>
           ))}
