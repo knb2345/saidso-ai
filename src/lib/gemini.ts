@@ -110,7 +110,7 @@ const logCall = logModelCall;
 async function post(
   url: string,
   body: unknown,
-  tries = 6,
+  tries = 12,
   family: Family = 'generate',
   budgetMs = 240_000
 ): Promise<any> {
@@ -144,8 +144,17 @@ async function post(
         }
         // Gemini tells us how long to wait; honour it rather than guessing.
         const m = /retry in ([0-9.]+)s/i.exec(text) || /"retryDelay":\s*"([0-9.]+)s"/.exec(text);
+        /*
+         * 503 is capacity, not quota. "This model is currently experiencing high demand"
+         * clears in hundreds of milliseconds — the same request succeeds on an immediate
+         * retry — so exponential back-off spends a minute solving a problem that had
+         * already gone away. Rate limits still get the server's own retryDelay.
+         */
+        const overloaded = res.status === 503;
         throw Object.assign(new Error(`http ${res.status}: ${text.slice(0, 300)}`), {
-          retryAfterMs: m ? Math.min(120_000, Math.ceil(Number(m[1]) * 1000) + 1500) : undefined,
+          retryAfterMs: overloaded
+            ? 600 + Math.random() * 400
+            : m ? Math.min(120_000, Math.ceil(Number(m[1]) * 1000) + 1500) : undefined,
         });
       }
       if (!res.ok) throw Object.assign(new Error(`http ${res.status}: ${(await res.text()).slice(0, 400)}`), { fatal: true });
