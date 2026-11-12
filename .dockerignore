@@ -1,0 +1,19 @@
+# Everything the image does not need. db/seed.db is deliberately NOT ignored.
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+next-env.d.ts
+db/kivi.db
+db/kivi.db-wal
+db/kivi.db-shm
+db/*.bak
+db/build.db*
+db/eval*.db*
+.claude
+Dockerfile
+.dockerignore

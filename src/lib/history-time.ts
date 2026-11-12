@@ -27,12 +27,17 @@ export function citationIds(text: string): string[] {
  * A parenthesis is only deleted when it holds nothing but ids; "(confirmed by email)"
  * survives.
  */
+const CITATION_LABELS = /\b(memory|memories|dictation|dictations|source|sources|see|from|cited|via|and|ids?)\b/gi;
+
 export function stripCitationIds(text: string): string {
   if (!text) return text;
   return text
     .replace(/\s*\((?:[^()]*?)?\b[md]_[a-z0-9]+\b(?:[^()]*?)?\)/gi, (m) =>
-      /[a-z]{4,}/i.test(m.replace(/\b[md]_[a-z0-9]+\b/gi, '')) ? m : ''
+      // Keep a parenthetical only if real words survive without the ids and the labels
+      // models put beside them: "(memory m_x, dictation d_y)" is a citation, nothing more.
+      /[a-z]{4,}/i.test(m.replace(/\b[md]_[a-z0-9]+\b/gi, '').replace(CITATION_LABELS, '')) ? m : ''
     )
+    .replace(/\s*\((?:\s*(?:memory|memories|dictation|dictations|source|sources)\s*(?:,|and|&)?\s*)+\)/gi, '')
     .replace(/\s*\b[md]_[a-z0-9]+\b/gi, '')
     .replace(/\s+([,.;:!?])/g, '$1')
     .replace(/\(\s*[,;]?\s*\)/g, '')

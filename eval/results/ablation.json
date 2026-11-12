@@ -1,0 +1,34 @@
+{
+  "ran_at": "2026-11-12T05:09:36.094Z",
+  "question": "does the entity-graph tool earn its place?",
+  "how": "KIVI_GRAPH_TOOL=off npx tsx scripts/eval.ts",
+  "finding": "On this suite, no case changes either way: the same three fail with and without about(). Kivi reached for the graph on 4 of 34 questions, the ones about people, and answered those in fewer lookups; p90 latency and cost per question were slightly lower with it on this run. The suite predates the graph, so it asks few questions of the shape the graph is for (\"who owns the HDFC work?\"). That gap, not this table, is the honest next step.",
+  "variants": [
+    {
+      "name": "with about() (deployed)",
+      "passed": 31,
+      "total": 34,
+      "p50_ms": 4525,
+      "p90_ms": 8194,
+      "cost_per_question": 0.001534,
+      "failed": [
+        "truvia-thread",
+        "devika-screens",
+        "hdfc-status"
+      ]
+    },
+    {
+      "name": "without about()",
+      "passed": 31,
+      "total": 34,
+      "p50_ms": 4318,
+      "p90_ms": 9820,
+      "cost_per_question": 0.001635,
+      "failed": [
+        "truvia-thread",
+        "devika-screens",
+        "hdfc-status"
+      ]
+    }
+  ]
+}

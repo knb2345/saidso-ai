@@ -4,6 +4,7 @@ import { db, newId } from './db';
 import { generate, generationProvider, type GenContent } from './gemini';
 import { confirmMemory, createMemory, forgetMemory, getMemory } from './memory';
 import { RETRIEVAL_FLOOR, relatedDictations, searchDictations, searchMemories } from './retrieve';
+import { aboutEntity } from './graph';
 
 /**
  * Hey Kivi.
@@ -62,10 +63,15 @@ HOW TO WORK
    If the history contains distinct incidents, separate their causes and resolutions.
    For current status, inspect recent source dictations with sort: "recent" and quote the
    latest explicit status and outstanding next step. Do not invent a date cutoff.
-4. Use open_dictation() when you need the exact words rather than a summary.
-5. Use draft_text() whenever the person asks you to write, polish, rewrite, or prepare
+4. Use about() when the question is about a person, team, company, project or system as a
+   whole — "who is…", "what do you know about…", "who owns…", "who works with…" — or when
+   it connects several of them. It walks the entity graph, where names are already resolved
+   across spellings, and returns every recorded relation with its memory id. Combine it with
+   recall() when you need more than the relations say.
+5. Use open_dictation() when you need the exact words rather than a summary.
+6. Use draft_text() whenever the person asks you to write, polish, rewrite, or prepare
    something. Pass the preference memory ids you found so the draft sounds like them.
-6. Finish by calling respond(). That is the only way to speak.
+7. Finish by calling respond(). That is the only way to speak.
 
 RESPOND
 - outcome "answered": you found it. Cite every memory id and dictation id you used.
@@ -78,6 +84,8 @@ RESPOND
   few words and do not search. Never present conversation as something you recalled.
 
 Rules that override everything above:
+- The answer is read aloud or shown as plain text: write plain sentences, with no markdown,
+  no asterisks, no headings and no bullet lists. (A draft may use the format it asks for.)
 - Every factual claim in your answer must come from a tool result you cite.
 - If memories disagree, say so. Where one clearly replaced the other, lead with the
   current one and name both dates. Where they simply conflict and nothing settles it,
@@ -130,6 +138,22 @@ export const TOOL_DECLARATIONS = [
             limit: { type: 'number' },
           },
           required: ['query'],
+        },
+      },
+      {
+        name: 'about',
+        description:
+          'Look up one person, team, company, project or system in the entity graph: who or what it is, the names it goes by, and every relation Kivi has recorded about it (leads, owns, integrates with, works with), each with the memory it came from. Use for "who is…", "what do you know about…", "who owns / works on…", and questions that connect people and systems. Names resolve across spellings, so "Rahul" finds "Rahul Iyer". Cite the memory ids it returns.',
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'The entity, as the person said it.' },
+            include_history: {
+              type: 'boolean',
+              description: 'Also return relations from superseded memories, for "what was it before" questions.',
+            },
+          },
+          required: ['name'],
         },
       },
       {
@@ -256,6 +280,15 @@ export type HeyKiviResult = {
 const MAX_ROUNDS = 10;
 
 /**
+ * KIVI_GRAPH_TOOL=off removes about() so the evaluation can be run with and without the
+ * entity graph — an ablation, not a feature flag anyone needs in normal use.
+ */
+const ACTIVE_TOOLS =
+  (process.env.KIVI_GRAPH_TOOL ?? 'on').trim() === 'off'
+    ? [{ functionDeclarations: TOOL_DECLARATIONS[0].functionDeclarations.filter((f) => f.name !== 'about') }]
+    : TOOL_DECLARATIONS;
+
+/**
  * On the last round Kivi is given only respond(), so it must answer with what it has
  * found rather than searching once more and running out.
  *
@@ -302,7 +335,7 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
 You are out of lookups. Answer now from what you already found, or say you could not find it.`
         : HEY_KIVI_SYSTEM,
       contents,
-      tools: lastRound ? RESPOND_ONLY : TOOL_DECLARATIONS,
+      tools: lastRound ? RESPOND_ONLY : ACTIVE_TOOLS,
       // Zero, not "nearly zero". At 0.1 the same question would take a different search
       // path on different runs and the evaluation moved by two or three cases between
       // identical runs, which makes a reported number an anecdote. Retrieval is already
@@ -347,7 +380,7 @@ You are out of lookups. Answer now from what you already found, or say you could
       const tStep = Date.now();
       const { result, step } = await runTool(fc.name, fc.args ?? {}, userId, question);
       const ms = Date.now() - tStep;
-      if (fc.name === 'recall' || fc.name === 'find_dictations') retrievalMs += ms;
+      if (fc.name === 'recall' || fc.name === 'find_dictations' || fc.name === 'about') retrievalMs += ms;
       if (fc.name === 'draft_text') {
         for (const p of result.applied_preferences ?? []) {
           if (!appliedPreferences.some((x) => x.id === p.id)) appliedPreferences.push(p);
@@ -548,6 +581,33 @@ async function runTool(
             id: d.id, kind: 'source', text: d.formatted, score: d.score,
             vec: 0, bm25: d.bm25_score, used: true,
           }))],
+        },
+      };
+    }
+    case 'about': {
+      const r = aboutEntity(userId, String(args.name ?? ''), args.include_history === true);
+      if (!r || !r.found) {
+        return {
+          result: { note: `no entity in the graph matches "${args.name}"; try recall instead` },
+          step: { summary: `no graph entity for "${args.name}"` },
+        };
+      }
+      const relations = r.relations.slice(0, 30);
+      return {
+        result: { ...r, relations, more_relations: r.relations.length > relations.length ? r.relations.length - relations.length : undefined },
+        step: {
+          summary: `${r.relations.length} relations for ${r.entity.name}${
+            r.entity.name.toLowerCase() !== String(args.name).toLowerCase() ? ` (resolved from "${args.name}")` : ''
+          } · connected to ${r.connected_to.length} entities`,
+          candidates: relations.map((x) => ({
+            id: x.memory_id,
+            kind: 'relation',
+            text: `${x.subject} — ${x.predicate} — ${x.object ?? ''}`,
+            score: 1,
+            vec: 0,
+            bm25: 0,
+            used: true,
+          })),
         },
       };
     }

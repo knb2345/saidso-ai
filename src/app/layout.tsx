@@ -1,21 +1,16 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import Rail from './Rail';
 
 export const metadata: Metadata = {
-  title: 'Kivi — what it knows',
-  description: 'Voice-first computing with a memory you can read.',
+  title: 'Kivi — a memory for everything you dictate',
+  description:
+    'Kivi remembers your work, not you. Ask about anything you have dictated and get an answer built from your own words — or an honest "you never said that".',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <div className="shell">
-          <Rail />
-          <div className="main">{children}</div>
-        </div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

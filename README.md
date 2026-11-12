@@ -17,7 +17,7 @@ is worth keeping from 500 dictations, and the evidence that both behave.
 
 Five surfaces. The first four are for a normal person; the last is for us.
 
-**Hey Kivi (`/`)** — you ask, it answers from your own words. Every answer carries the
+**Hey Kivi (`/ask`)** — you ask, typed or out loud, and it answers from your own words. Every answer carries the
 memories and dictations it was built from as chips you can open, and a plain "how did Kivi
 get here?" link. When your history does not contain the answer, it says so instead of
 guessing, and the interface labels that turn *not in your history* rather than dressing it

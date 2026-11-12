@@ -1,438 +1,617 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import './landing.css';
 
-type Citation = { id: string; kind?: string; statement?: string; formatted?: string; spoken_at?: string; app?: string };
+/*
+ * The intro page. Someone arriving from a link gets the idea in fifteen seconds — a replay
+ * of real records from the seeded corpus being kept, replaced or refused, then a question
+ * answered from them — before they are handed the product itself at /ask.
+ */
 
-type Turn = {
-  role: 'user' | 'kivi';
-  text: string;
-  outcome?: 'answered' | 'abstained' | 'asked' | 'acted' | 'chatted' | string;
-  confidence?: string;
-  draft?: string;
-  citations?: { memories: Citation[]; dictations: Citation[] };
-  appliedPreferences?: { id: string; statement: string }[];
-  confirm?: { memory_id: string; statement: string; why: string } | null;
-  trace?: any;
-  error?: string;
-  settled?: 'confirmed' | 'forgotten';
-};
+type Verdict = 'fact' | 'preference' | 'supersede' | 'refuse';
 
-const STARTERS = [
-  'When does V2 launch?',
-  'Find the Slack update I dictated around 5pm yesterday and polish it for the meeting I am walking into.',
-  'What happened with the Truvia KYC timeouts?',
-  'How do I like my standup updates written?',
-  'What did we decide about UPI autopay, and why?',
-  'What is our new pricing for enterprise merchants?',
+type Scene =
+  | {
+      type: 'dictation';
+      app: string;
+      where: string;
+      raw: string;
+      verdict: Verdict;
+      memory: string;
+      note: string;
+      replaces?: number;
+    }
+  | { type: 'ask'; q: string; a: string; outcome: 'answered' | 'abstained'; chips: string[] };
+
+// Lightly trimmed from corpus/dictations.jsonl (d_00091, d_00069, d_00214, d_00348, d_00353).
+const SCENES: Scene[] = [
+  {
+    type: 'dictation',
+    app: 'slack',
+    where: '#product-team',
+    raw: 'hey team um so just wanted to update you all that the merchant onboarding v two launch date is officially locked for the 14th of november',
+    verdict: 'fact',
+    memory: 'Merchant onboarding V2 launches on November 14.',
+    note: 'kept · a date someone will ask about again',
+  },
+  {
+    type: 'dictation',
+    app: 'slack',
+    where: '#product-team',
+    raw: 'hey team from now on can we make sure every standup update is written as three short bullets with no paragraphs and no greeting at the top please',
+    verdict: 'preference',
+    memory: 'Standup updates: three short bullets, no greeting.',
+    note: 'kept · a rule for how you want things written',
+  },
+  {
+    type: 'dictation',
+    app: 'whatsapp',
+    where: 'message to sister',
+    raw: 'hey di um my migraine came back so badly today … i managed to book a neurologist appointment for friday morning',
+    verdict: 'refuse',
+    memory: 'Health',
+    note: 'not learned · still in your history, never a memory',
+  },
+  {
+    type: 'dictation',
+    app: 'slack',
+    where: 'V2 launch delay',
+    raw: 'hey team um the h d f c sandbox slipped again so we are officially pushing the v two launch to the 5th of december and this is final',
+    verdict: 'supersede',
+    memory: 'Merchant onboarding V2 launches on December 5.',
+    note: 'replaces November 14 · the old date is kept as history',
+    replaces: 0,
+  },
+  {
+    type: 'dictation',
+    app: 'notes',
+    where: 'note to self',
+    raw: 'um password for staging is kavatch pay ••••••••• let me just write it down so i don’t forget',
+    verdict: 'refuse',
+    memory: 'Credential',
+    note: 'never learned · never repeated back',
+  },
+  {
+    type: 'ask',
+    q: 'When does V2 launch?',
+    a: 'December 5th. You moved it from November 14th when the HDFC sandbox slipped again.',
+    outcome: 'answered',
+    chips: ['said · slack · V2 launch delay', 'was · November 14'],
+  },
+  {
+    type: 'ask',
+    q: 'What is our new pricing for enterprise merchants?',
+    a: 'You have never dictated anything about enterprise pricing, so I will not guess.',
+    outcome: 'abstained',
+    chips: [],
+  },
 ];
 
-/** An answer only earns the words "from your history" if something came out of it. */
-function hasSources(t: Turn): boolean {
-  return (t.citations?.memories.length ?? 0) + (t.citations?.dictations.length ?? 0) > 0;
+// Timeline, in milliseconds. Everything on screen is derived from one clock.
+const TYPE_MS = 19;
+const VERDICT_HOLD = 1500;
+const Q_TYPE_MS = 42;
+const THINK_MS = 1000;
+const ANSWER_HOLD = 3600;
+const END_HOLD = 2200;
+
+function sceneLength(s: Scene) {
+  if (s.type === 'dictation') return s.raw.length * TYPE_MS + VERDICT_HOLD;
+  return s.q.length * Q_TYPE_MS + THINK_MS + ANSWER_HOLD;
 }
+const STARTS = SCENES.reduce<number[]>((acc, s, i) => {
+  acc.push(i === 0 ? 0 : acc[i - 1] + sceneLength(SCENES[i - 1]));
+  return acc;
+}, []);
+const LOOP = STARTS[STARTS.length - 1] + sceneLength(SCENES[SCENES.length - 1]) + END_HOLD;
+// What a reduced-motion visitor sees: the ledger complete and the first question answered.
+const STILL = STARTS[5] + sceneLength(SCENES[5]) - 10;
 
-export default function HeyKivi() {
-  const [turns, setTurns] = useState<Turn[]>([]);
-  const [input, setInput] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [conversationId, setConversationId] = useState<string | undefined>();
-  const [openTrace, setOpenTrace] = useState<number | null>(null);
-  // Scoped to a turn: a bare id opened the same panel under every answer that happened
-  // to carry citations, because this block renders inside the turn map.
-  const [openCite, setOpenCite] = useState<{ turn: number; id: string } | null>(null);
-  const isOpenCite = (turn: number, id: string) => openCite?.turn === turn && openCite?.id === id;
-  const endRef = useRef<HTMLDivElement>(null);
+type Frame = {
+  index: number;
+  typed: number;
+  phase: 'typing' | 'verdict' | 'thinking' | 'answer';
+  ledger: { scene: number; superseded: boolean }[];
+  ask: { scene: number; typed: number; phase: 'typing' | 'thinking' | 'answer' } | null;
+};
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [turns, busy]);
+function frameAt(t: number): Frame {
+  let index = 0;
+  for (let i = 0; i < SCENES.length; i++) if (t >= STARTS[i]) index = i;
+  const s = SCENES[index];
+  const local = t - STARTS[index];
 
-  async function ask(question: string) {
-    if (!question.trim() || busy) return;
-    setInput('');
-    const history = turns.slice(-6).map((t) => ({ role: t.role, text: t.text }));
-    setTurns((t) => [...t, { role: 'user', text: question }]);
-    setBusy(true);
-    try {
-      const res = await fetch('/api/hey', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ question, conversationId, history }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        const quota = /quota|429|exhausted/i.test(String(data.error));
-        setTurns((t) => [
-          ...t,
-          {
-            role: 'kivi',
-            text: quota
-              ? 'I have run out of model quota for now, so I cannot look anything up. Everything already in your memory is still here to read.'
-              : 'I could not reach the model just now. Nothing has been changed.',
-            error: String(data.error).slice(0, 300),
-          },
-        ]);
-      } else {
-        setConversationId(data.conversationId);
-        setTurns((t) => [...t, { role: 'kivi', ...data, text: data.answer }]);
-      }
-    } catch (e: any) {
-      setTurns((t) => [...t, { role: 'kivi', text: 'Something went wrong.', error: String(e) }]);
-    } finally {
-      setBusy(false);
+  let typed = 0;
+  let phase: Frame['phase'] = 'typing';
+  if (s.type === 'dictation') {
+    typed = Math.min(s.raw.length, Math.floor(local / TYPE_MS));
+    phase = typed >= s.raw.length ? 'verdict' : 'typing';
+  } else {
+    const typing = s.q.length * Q_TYPE_MS;
+    typed = Math.min(s.q.length, Math.floor(local / Q_TYPE_MS));
+    phase = local < typing ? 'typing' : local < typing + THINK_MS ? 'thinking' : 'answer';
+  }
+
+  const ledger: Frame['ledger'] = [];
+  for (let j = 0; j < SCENES.length; j++) {
+    const sj = SCENES[j];
+    if (sj.type !== 'dictation') continue;
+    const shown = j < index || (j === index && phase === 'verdict');
+    if (!shown) continue;
+    ledger.push({ scene: j, superseded: false });
+    if (sj.replaces !== undefined) {
+      const old = ledger.find((l) => l.scene === sj.replaces);
+      if (old) old.superseded = true;
     }
   }
 
-  async function settle(turnIndex: number, memoryId: string, action: 'confirm' | 'forget') {
-    await fetch(`/api/memories/${memoryId}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action, reason: 'the person answered when Kivi asked mid-conversation' }),
-    });
-    setTurns((t) =>
-      t.map((turn, i) =>
-        i === turnIndex ? { ...turn, settled: action === 'confirm' ? 'confirmed' : 'forgotten' } : turn
-      )
-    );
-  }
+  let ask: Frame['ask'] = null;
+  if (s.type === 'ask') ask = { scene: index, typed, phase: phase as 'typing' | 'thinking' | 'answer' };
 
-  async function forget(memoryId: string) {
-    await fetch(`/api/memories/${memoryId}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action: 'forget', reason: 'the person said this was wrong while talking to Hey Kivi' }),
-    });
-    setTurns((t) => [
-      ...t,
-      { role: 'kivi', text: 'Forgotten. I will not use that again, and I have kept a note of where it came from in case you want it back.' },
-    ]);
-  }
+  return { index, typed, phase, ledger, ask };
+}
+
+function useClock() {
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setT(STILL);
+      return;
+    }
+    let raf = 0;
+    let last = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      // ~30 fps is plenty for typing, and keeps the page light.
+      if (now - last > 33) {
+        last = now;
+        setT((now - start) % LOOP);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return t;
+}
+
+const VERDICT_LABEL: Record<Verdict, string> = {
+  fact: 'fact',
+  preference: 'preference',
+  supersede: 'fact · updated',
+  refuse: 'refused',
+};
+
+function Replay() {
+  const t = useClock();
+  const f = frameAt(t);
+  const scene = SCENES[f.index];
+  const listening = scene.type === 'dictation';
+  // The last dictation stays on screen while Kivi is being asked.
+  const lastDictation = listening
+    ? f.index
+    : (SCENES.map((s, i) => (s.type === 'dictation' ? i : -1)).filter((i) => i >= 0).pop() as number);
+  const d = SCENES[lastDictation] as Extract<Scene, { type: 'dictation' }>;
+  const dTyped = listening ? f.typed : d.raw.length;
+  const dVerdict = !listening || f.phase === 'verdict';
+  const fadingOut = t > LOOP - 500;
 
   return (
-    <div className="page">
-      {turns.length === 0 && (
-        <>
-          <h1>Hey Kivi</h1>
-          <p className="lede">
-            Ask about anything you have dictated. Kivi answers from your own history — and tells you when
-            your history does not contain the answer.
-          </p>
-          <div className="starters">
-            {STARTERS.map((s) => (
-              <button key={s} className="starter" onClick={() => ask(s)}>
-                {s}
-              </button>
+    <div className={`lp-replay${fadingOut ? ' out' : ''}`} aria-label="A replay of Kivi learning from dictations">
+      <div className="lp-replay-bar">
+        <span className="lp-dots">
+          <i />
+          <i />
+          <i />
+        </span>
+        <span>replay · real records from the demo corpus</span>
+      </div>
+
+      <div className="lp-pane">
+        <div className="lp-pane-head">
+          <span>
+            <b>{d.app}</b> · {d.where}
+          </span>
+          <span className={`lp-wave${listening && f.phase === 'typing' ? ' on' : ''}`} aria-hidden>
+            {Array.from({ length: 14 }).map((_, i) => (
+              <i key={i} style={{ animationDelay: `${-((i * 137) % 900)}ms` }} />
             ))}
-          </div>
-        </>
-      )}
+          </span>
+        </div>
+        <div className="lp-raw">
+          {d.raw.slice(0, dTyped)}
+          {listening && f.phase === 'typing' && <span className="lp-caret" />}
+        </div>
+        <div className={`lp-verdict v-${d.verdict}${dVerdict ? ' show' : ''}`}>
+          <span className="lp-vtag">{VERDICT_LABEL[d.verdict]}</span>
+          {d.note}
+        </div>
+      </div>
 
-      <div className="thread">
-        {turns.map((t, i) =>
-          t.role === 'user' ? (
-            <div className="bubble-user" key={i}>
-              {t.text}
-            </div>
-          ) : (
-            <div className="kivi-turn" key={i}>
-              {t.outcome && (
-                <div className="outcome">
-                  <span className={`dot ${t.outcome}`} />
-                  {t.outcome === 'answered' &&
-                    (hasSources(t)
-                      ? `from your history · ${t.confidence} confidence`
-                      : 'answered without a source — treat with care')}
-                  {t.outcome === 'abstained' && 'not in your history'}
-                  {t.outcome === 'asked' && 'needs one detail'}
-                  {t.outcome === 'acted' && 'done'}
-                  {t.outcome === 'chatted' && 'just talking — nothing looked up'}
+      <div className="lp-pane">
+        <div className="lp-pane-head">
+          <span>
+            <b>what kivi knows</b>
+          </span>
+          <span className="lp-count">{f.ledger.filter((l) => SCENES[l.scene].type === 'dictation' && (SCENES[l.scene] as any).verdict !== 'refuse' && !l.superseded).length} kept</span>
+        </div>
+        <div className="lp-ledger">
+          {f.ledger.length === 0 && <div className="lp-empty">listening…</div>}
+          {f.ledger.map((l) => {
+            const s = SCENES[l.scene] as Extract<Scene, { type: 'dictation' }>;
+            return (
+              <div key={l.scene} className={`lp-mem v-${s.verdict}${l.superseded ? ' old' : ''}`}>
+                <span className="lp-mkind">
+                  {s.verdict === 'refuse' ? '✕' : l.superseded ? 'was' : s.verdict === 'preference' ? 'pref' : 'fact'}
+                </span>
+                <span className="lp-mtext">
+                  {s.verdict === 'refuse' ? `${s.memory} — not learned` : s.memory}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="lp-pane lp-askpane">
+        <div className="lp-pane-head">
+          <span>
+            <b>hey kivi</b>
+          </span>
+        </div>
+        {!f.ask ? (
+          <div className="lp-empty">Ask anything once it has listened.</div>
+        ) : (
+          (() => {
+            const a = SCENES[f.ask.scene] as Extract<Scene, { type: 'ask' }>;
+            return (
+              <div className="lp-qa">
+                <div className="lp-q">
+                  {a.q.slice(0, f.ask.typed)}
+                  {f.ask.phase === 'typing' && <span className="lp-caret" />}
                 </div>
-              )}
-              <div className={`kivi-answer${t.outcome === 'abstained' ? ' abstain' : ''}`}>{t.text}</div>
-
-              {t.draft && (
-                <>
-                  <div className="draft">
-                    <div className="draft-head">
-                      <span>draft</span>
-                      <button className="linkish" onClick={() => navigator.clipboard?.writeText(t.draft!)}>
-                        copy
-                      </button>
-                    </div>
-                    {t.draft}
+                {f.ask.phase === 'thinking' && (
+                  <div className="lp-thinking">
+                    <span className="pulse" /> looking through your history…
                   </div>
-                  {t.appliedPreferences && t.appliedPreferences.length > 0 && (
-                    <div className="because">
-                      <div className="because-head">
-                        Written the way you asked for, {t.appliedPreferences.length}{' '}
-                        {t.appliedPreferences.length === 1 ? 'thing' : 'things'} you have said before:
-                      </div>
-                      <div className="chips">
-                        {t.appliedPreferences.map((p) => (
-                          <button
-                            key={p.id}
-                            className="chip kind-preference"
-                            onClick={() => setOpenCite(isOpenCite(i, p.id) ? null : { turn: i, id: p.id })}
-                          >
-                            {p.statement}
-                          </button>
+                )}
+                {f.ask.phase === 'answer' && (
+                  <div className="lp-a">
+                    <div className={`lp-outcome ${a.outcome}`}>
+                      <span className="dot" />
+                      {a.outcome === 'answered' ? 'from your history' : 'not in your history'}
+                    </div>
+                    <div className="lp-atext">{a.a}</div>
+                    {a.chips.length > 0 && (
+                      <div className="lp-chips">
+                        {a.chips.map((c) => (
+                          <span key={c} className="lp-chip">
+                            {c}
+                          </span>
                         ))}
                       </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {t.error && <div className="banner">{t.error}</div>}
-
-              {t.citations && (t.citations.memories.length > 0 || t.citations.dictations.length > 0) && (
-                <div className="because">
-                  <div className="because-head">Because you said:</div>
-                  <div className="chips">
-                    {t.citations.memories.map((m) => (
-                      <button
-                        key={m.id}
-                        className={`chip kind-${m.kind}`}
-                        onClick={() => setOpenCite(isOpenCite(i, m.id) ? null : { turn: i, id: m.id })}
-                      >
-                        {m.statement}
-                      </button>
-                    ))}
-                    {t.citations.dictations.map((d) => (
-                      <button
-                        key={d.id}
-                        className="chip dictation"
-                        onClick={() => setOpenCite(isOpenCite(i, d.id) ? null : { turn: i, id: d.id })}
-                      >
-                        {new Date(d.spoken_at!).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
-                        {d.app ? ` · ${d.app}` : ''}
-                      </button>
-                    ))}
+                    )}
                   </div>
-                  {openCite?.turn === i && <CiteDetail id={openCite.id} onForget={forget} />}
-                </div>
-              )}
-
-              {t.confirm && !t.settled && (
-                <div className="checkin">
-                  <div className="checkin-q">
-                    Still right? <strong>{t.confirm.statement}</strong>
-                  </div>
-                  <div className="checkin-why">{t.confirm.why}</div>
-                  <div className="mactions">
-                    <button className="linkish" onClick={() => settle(i, t.confirm!.memory_id, 'confirm')}>
-                      yes, that is right
-                    </button>
-                    <button className="linkish" onClick={() => settle(i, t.confirm!.memory_id, 'forget')}>
-                      no — forget it
-                    </button>
-                  </div>
-                </div>
-              )}
-              {t.settled && (
-                <div className="checkin">
-                  <div className="checkin-why">
-                    {t.settled === 'confirmed'
-                      ? 'Noted — Kivi will rely on that now.'
-                      : 'Forgotten. Kivi will not use it again.'}
-                  </div>
-                </div>
-              )}
-
-              {t.trace && (
-                <div className="turn-tools">
-                  <button className="linkish" onClick={() => setOpenTrace(openTrace === i ? null : i)}>
-                    {openTrace === i ? 'hide how Kivi got here' : 'how did Kivi get here?'}
-                  </button>
-                  <span style={{ fontSize: 11.5, color: 'var(--muted-2)' }}>
-                    {(t.trace.totalMs / 1000).toFixed(1)}s · {t.trace.steps.length} lookups ·{' '}
-                    ${t.trace.costUsd.toFixed(5)}
-                  </span>
-                </div>
-              )}
-
-              {openTrace === i && t.trace && <TraceView trace={t.trace} />}
-            </div>
-          )
+                )}
+              </div>
+            );
+          })()
         )}
-        {busy && (
-          <div className="thinking">
-            <span className="pulse" /> looking through your history…
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
-
-      <div className="composer">
-        <div className="composer-inner">
-          <textarea
-            rows={1}
-            value={input}
-            placeholder="Hey Kivi…"
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                ask(input);
-              }
-            }}
-          />
-          <button className="mic" disabled={busy || !input.trim()} onClick={() => ask(input)} title="Send">
-            ↑
-          </button>
-        </div>
-        <div className="hint">
-          This demo types what you would normally say. Dictation itself is unchanged — semantic memory
-          never touches it.
-        </div>
       </div>
     </div>
   );
 }
 
-function CiteDetail({ id, onForget }: { id: string; onForget: (id: string) => void }) {
-  /*
-   * The fetched payload is stored WITH the id it belongs to.
-   *
-   * Clicking a second chip changes the `id` prop, and React re-renders before the effect
-   * can refetch — so for one render the component held a memory response while `id` said
-   * dictation, took the dictation branch, and read `.spoken_at` off undefined. That threw
-   * a runtime error over the whole answer. Keying the payload to its id means a stale
-   * response is simply never rendered.
-   */
-  const [state, setState] = useState<{ id: string; data: any } | null>(null);
-  const isMemory = id.startsWith('m_');
+type Stats = {
+  dictations: number;
+  evaluation: { passed: number; total: number; memoryPassed: number; memoryTotal: number; costPerQuestion: number; p50Ms: number } | null;
+  memories: { fact: number; preference: number; superseded: number };
+  decisions: { decision: string; c: number }[];
+};
 
+function useStats() {
+  const [s, setS] = useState<Stats | null>(null);
   useEffect(() => {
-    let cancelled = false;
-    setState(null);
-    fetch(isMemory ? `/api/memories/${id}` : `/api/dictations/${id}`)
+    fetch('/api/stats')
       .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled) setState({ id, data });
-      })
-      .catch(() => {
-        // A citation that cannot be loaded is worth saying plainly; it must never take
-        // the answer down with it.
-        if (!cancelled) setState({ id, data: { error: 'could not load this source' } });
-      });
-    // A slower earlier request must not overwrite the one the person is looking at.
-    return () => {
-      cancelled = true;
-    };
-  }, [id, isMemory]);
+      .then(setS)
+      .catch(() => {});
+  }, []);
+  return s;
+}
 
-  if (!state || state.id !== id) return <div className="detail">loading…</div>;
-  const data = state.data;
-  if (!data || data.error) return <div className="detail">{data?.error ?? 'could not load this source'}</div>;
-
-  if (isMemory) {
-    if (!data.memory) return <div className="detail">this memory is no longer available</div>;
-    return (
-      <div className="detail">
-        <div className="block">
-          <h3>{data.memory.kind} · known since {String(data.memory.first_seen_at ?? '').slice(0, 10)}</h3>
-          <div>{data.memory.statement}</div>
-        </div>
-        <div className="block">
-          <h3>Where this came from</h3>
-          {(data.evidence ?? []).map((e: any) => (
-            <div key={e.dictation_id}>
-              <div className="equote">
-                <em>“{e.quote}”</em>
-              </div>
-              <div className="esrc">
-                {new Date(e.spoken_at).toLocaleString()} · {e.app} · {e.dictation_id}
-              </div>
-            </div>
-          ))}
-          {(data.evidence ?? []).length === 0 && <div className="esrc">You told Kivi this directly.</div>}
-        </div>
-        <button className="linkish" onClick={() => onForget(id)}>
-          this is wrong — forget it
-        </button>
-      </div>
-    );
-  }
-
-  if (!data.dictation) return <div className="detail">this dictation is no longer available</div>;
-
+function Numbers({ s }: { s: Stats | null }) {
+  const rejected = s?.decisions.find((d) => d.decision === 'rejected')?.c;
+  const items = [
+    { v: s?.dictations, l: 'dictations read, every one kept whole' },
+    { v: s ? s.memories.fact + s.memories.preference : undefined, l: 'facts and preferences worth keeping' },
+    { v: rejected, l: 'candidates it deliberately chose not to learn' },
+    { v: s?.memories.superseded, l: 'beliefs it changed — the old ones kept as history' },
+  ];
+  const e = s?.evaluation;
   return (
-    <div className="detail">
-      <div className="block">
-        <h3>
-          {new Date(data.dictation.spoken_at).toLocaleString()} · {data.dictation.app}
-        </h3>
-        <div>{data.dictation.formatted}</div>
-      </div>
-      <div className="block">
-        <h3>What you actually said</h3>
-        <div className="raw">{data.dictation.raw_asr}</div>
-      </div>
+    <>
+    <div className="lp-stats">
+      {items.map((i) => (
+        <div className="lp-stat" key={i.l}>
+          <div className="lp-stat-v">{i.v ?? '—'}</div>
+          <div className="lp-stat-l">{i.l}</div>
+        </div>
+      ))}
     </div>
+    {e && (
+      <div className="lp-eval">
+        <span>
+          <b>
+            {e.passed} / {e.total}
+          </b>{' '}
+          evaluation questions passed
+        </span>
+        <span>
+          <b>
+            {e.memoryPassed} / {e.memoryTotal}
+          </b>{' '}
+          privacy and memory-state checks
+        </span>
+        <span>
+          <b>{(e.p50Ms / 1000).toFixed(1)}s</b> median answer
+        </span>
+        <span>
+          <b>${e.costPerQuestion.toFixed(4)}</b> per answer
+        </span>
+        <Link href="/eval" className="lp-eval-note">
+          every case, failures included →
+        </Link>
+      </div>
+    )}
+    </>
   );
 }
 
-function TraceView({ trace }: { trace: any }) {
+const TRY = [
+  { q: 'When does V2 launch?', why: 'A date that changed halfway through four months of dictation.' },
+  {
+    q: 'Find the Slack update I dictated around 5pm yesterday and polish it into a standup update.',
+    why: 'Found by time and app, then rewritten the way you once said you like it.',
+  },
+  { q: 'What happened with the Truvia KYC timeouts?', why: 'One story, told across three apps, weeks apart.' },
+  { q: 'What is our new pricing for enterprise merchants?', why: 'Never mentioned. Watch it decline to make something up.' },
+];
+
+export default function Intro() {
+  const stats = useStats();
   return (
-    <div className="detail">
-      <div className="block">
-        <h3>What Kivi did</h3>
-        {trace.steps.map((s: any, i: number) => (
-          <div className="step" key={i}>
-            <div className="step-name">
-              {s.tool}({Object.entries(s.args).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ')})
-            </div>
-            <div className="kv">
-              {s.summary} · {s.ms}ms
-            </div>
-            {s.candidates && s.candidates.length > 0 && (
-              <table className="cands">
-                <thead>
-                  <tr>
-                    <th>id</th>
-                    <th>what</th>
-                    <th className="num">score</th>
-                    <th className="num">vector</th>
-                    <th className="num">bm25</th>
-                    <th>used</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {s.candidates.map((c: any) => (
-                    <tr key={c.id}>
-                      <td className={c.used ? 'used' : ''}>{c.id}</td>
-                      <td className={c.used ? 'used' : ''}>{c.text.slice(0, 90)}</td>
-                      <td className="num">{c.score}</td>
-                      <td className="num">{c.vec}</td>
-                      <td className="num">{c.bm25}</td>
-                      <td>{c.used ? 'yes' : 'below floor'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+    <div className="lp">
+      <header className="lp-nav">
+        <Link href="/" className="lp-logo">
+          kiv<span>i</span>
+        </Link>
+        <nav>
+          <a href="#how">How it works</a>
+          <a href="#trust">What it refuses</a>
+          <Link href="/graph">Graph</Link>
+          <Link href="/eval">Evaluation</Link>
+          <a href="https://github.com/knb2345/kivi-ai" target="_blank" rel="noreferrer">
+            Source
+          </a>
+          <Link href="/ask" className="lp-btn small">
+            Open the app
+          </Link>
+        </nav>
+      </header>
+
+      <section className="lp-hero">
+        <div className="lp-hero-copy">
+          <div className="lp-eyebrow">
+            <span className="lp-live" /> Semantic memory for voice dictation
           </div>
-        ))}
-      </div>
-      <div className="block">
-        <h3>Cost of this answer</h3>
-        <div className="kv">
-          {trace.rounds} model rounds · {trace.inputTokens} in / {trace.outputTokens} out tokens ·
-          retrieval {trace.retrievalMs}ms · model {trace.modelMs}ms · ${trace.costUsd.toFixed(6)}
+          <h1>
+            Kivi remembers
+            <br />
+            your <em>work</em>,<br />
+            not you.
+          </h1>
+          <p className="lp-sub">
+            Every assistant remembers what you told it. Kivi remembers what you told everyone else —
+            the deadline you gave your team, the promise you made a partner, the decision you dictated
+            late at night.
+          </p>
+          <p className="lp-sub2">
+            Ask it anything. It answers from your own words and shows you which ones, or tells you
+            that you never said it.
+          </p>
+          <div className="lp-ctas">
+            <Link href="/ask" className="lp-btn">
+              Talk to Hey Kivi <span aria-hidden>→</span>
+            </Link>
+            <Link href="/memory" className="lp-btn ghost">
+              See what it remembered
+            </Link>
+          </div>
+          <p className="lp-fine">
+            Loaded with four months of one product manager’s dictations: 499 of them, across Slack,
+            Gmail, Linear, Notion and WhatsApp. The people and company are fictional; every answer
+            is computed live.
+          </p>
         </div>
-      </div>
-      {trace.notes.length > 0 && (
-        <div className="block">
-          <h3>Warnings</h3>
-          {trace.notes.map((n: string, i: number) => (
-            <div className="kv" key={i}>
-              {n}
-            </div>
+        <div className="lp-hero-demo">
+          <Replay />
+        </div>
+      </section>
+
+      <section className="lp-section" id="how">
+        <div className="lp-kicker">How it works</div>
+        <h2>Listening is easy. Knowing what to forget is the product.</h2>
+        <div className="lp-steps">
+          <div className="lp-step">
+            <div className="lp-n">01</div>
+            <h3>Keep everything</h3>
+            <p>
+              Every dictation is stored whole and searchable: what the recogniser heard, and what was
+              actually sent. Nothing is summarised away.
+            </p>
+          </div>
+          <div className="lp-step">
+            <div className="lp-n">02</div>
+            <h3>Learn very little</h3>
+            <p>
+              A model reads each dictation and promotes only what you would need again: dates,
+              owners, decisions, numbers, and rules for how you write. A memory that cannot quote
+              its source is dropped.
+            </p>
+          </div>
+          <div className="lp-step">
+            <div className="lp-n">03</div>
+            <h3>Change its mind properly</h3>
+            <p>
+              When a later dictation contradicts an earlier one, the newer claim wins and the older
+              one is kept as history, so Kivi can tell you what it used to believe and when that
+              changed.
+            </p>
+          </div>
+          <div className="lp-step">
+            <div className="lp-n">04</div>
+            <h3>Answer, or abstain</h3>
+            <p>
+              Hey Kivi is an agent with seven tools over that memory, including a walk over an entity
+              graph where names are resolved across spellings. It can only speak through a call that
+              carries its citations, and when nothing supports an answer, it says so.
+            </p>
+          </div>
+        </div>
+
+        <div className="lp-flow" aria-label="Pipeline">
+          {[
+            'speech',
+            'dictation',
+            'extract',
+            'quote check',
+            'reconcile',
+            'memory',
+            'entity graph',
+            'vectors + BM25 + graph',
+            'answer with citations',
+          ].map((x, i, a) => (
+            <span key={x} className="lp-flow-item">
+              <span className={`lp-flow-chip${i === 0 || i === a.length - 1 ? ' end' : ''}`}>{x}</span>
+              {i < a.length - 1 && <span className="lp-flow-arrow">→</span>}
+            </span>
           ))}
         </div>
-      )}
+      </section>
+
+      <section className="lp-section">
+        <div className="lp-kicker">Measured, not claimed</div>
+        <h2>Live from the database behind this page.</h2>
+        <Numbers s={stats} />
+      </section>
+
+      <section className="lp-section">
+        <div className="lp-kicker">Look inside</div>
+        <h2>Nothing is a black box. Open any of it.</h2>
+        <div className="lp-try lp-inside">
+          <Link href="/graph" className="lp-trycard">
+            <div className="lp-tryq">Knowledge graph</div>
+            <div className="lp-trywhy">
+              The people, systems and projects behind the memories, resolved across spellings
+              (“Rahul” is Rahul Iyer), with every edge traced to the words that produced it.
+            </div>
+            <div className="lp-trygo">explore the graph →</div>
+          </Link>
+          <Link href="/memory" className="lp-trycard">
+            <div className="lp-tryq">What Kivi knows</div>
+            <div className="lp-trywhy">
+              Every memory as a plain sentence, how often you said it, what it replaced, and a
+              one-tap way to correct or forget it.
+            </div>
+            <div className="lp-trygo">read the memory →</div>
+          </Link>
+          <Link href="/eval" className="lp-trycard">
+            <div className="lp-tryq">Evaluation</div>
+            <div className="lp-trywhy">
+              34 questions and 9 memory checks through the full pipeline, failures first, each one
+              re-runnable live with a click.
+            </div>
+            <div className="lp-trygo">see the results →</div>
+          </Link>
+          <Link href="/inspect" className="lp-trycard">
+            <div className="lp-tryq">Why it answered that</div>
+            <div className="lp-trywhy">
+              Retrieval candidates with vector and BM25 scores, every tool call, tokens and cost,
+              for every answer it has given.
+            </div>
+            <div className="lp-trygo">inspect the traces →</div>
+          </Link>
+        </div>
+      </section>
+
+      <section className="lp-section" id="trust">
+        <div className="lp-kicker">What it refuses to do</div>
+        <h2>A memory you can trust has to say no.</h2>
+        <div className="lp-refuse">
+          <div>
+            <h3>It won’t guess.</h3>
+            <p>No source, no answer. “You never said that” is a first-class outcome, not a failure.</p>
+          </div>
+          <div>
+            <h3>It won’t learn your private life.</h3>
+            <p>
+              Health, money, family, politics and colleagues’ private lives stay findable in your
+              history and out of memory.
+            </p>
+          </div>
+          <div>
+            <h3>It won’t repeat a credential.</h3>
+            <p>A password you dictate is never learned and never said back.</p>
+          </div>
+          <div>
+            <h3>It won’t touch your dictation.</h3>
+            <p>Memory feeds Hey Kivi only. The same sentence formats the same way next month.</p>
+          </div>
+          <div>
+            <h3>It won’t hide its working.</h3>
+            <p>
+              Every memory shows the words it came from. Every answer shows its retrieval scores and
+              its cost. Anything wrong is one tap from forgotten.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="lp-section">
+        <div className="lp-kicker">Try it</div>
+        <h2>Ask it yourself — typed, or out loud.</h2>
+        <div className="lp-try">
+          {TRY.map((x) => (
+            <Link key={x.q} href={`/ask?q=${encodeURIComponent(x.q)}`} className="lp-trycard">
+              <div className="lp-tryq">“{x.q}”</div>
+              <div className="lp-trywhy">{x.why}</div>
+              <div className="lp-trygo">ask this →</div>
+            </Link>
+          ))}
+        </div>
+        <div className="lp-final">
+          <Link href="/ask" className="lp-btn">
+            Open Kivi <span aria-hidden>→</span>
+          </Link>
+          <span className="lp-fine">
+            Voice input works in Chrome and Edge. This is a shared demo: anything you teach it is
+            reset every day.
+          </span>
+        </div>
+      </section>
+
+      <footer className="lp-foot">
+        <span>
+          kiv<span className="g">i</span>
+        </span>
+        <span>Next.js · SQLite with FTS5 and vector search · Gemini</span>
+        <a href="https://github.com/knb2345/kivi-ai" target="_blank" rel="noreferrer">
+          Source on GitHub
+        </a>
+      </footer>
     </div>
   );
 }

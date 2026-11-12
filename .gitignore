@@ -21,3 +21,7 @@ agg.log
 c1.log
 c2.log
 *.log
+
+.azure-acr
+db/build.db*
+db/*.bak

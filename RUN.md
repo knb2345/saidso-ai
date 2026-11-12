@@ -92,7 +92,10 @@ Open **http://localhost:3000**.
 
 | Page | What it is |
 | --- | --- |
-| `/` | **Hey Kivi** — the product. Ask questions of your own dictation history |
+| `/` | **Intro** — a one-minute replay of what Kivi does, then into the product |
+| `/ask` | **Hey Kivi** — the product. Ask questions of your own dictation history, typed or by voice (Chrome/Edge) |
+| `/graph` | **Knowledge graph** — entities resolved across spellings, every relation traced to its memory |
+| `/eval` | **Evaluation** — every case, failures first, each re-runnable live |
 | `/dictate` | **Dictation** — the half memory never touches. Speak (Chrome/Edge) or type what you would have said, and watch what Kivi does and does not learn from it |
 | `/memory` | **What Kivi knows** — every memory, its evidence, edit and forget controls |
 | `/history` | **Dictation history** — the raw corpus, and what was kept or ignored from each record |
@@ -100,7 +103,7 @@ Open **http://localhost:3000**.
 
 ## 7. Interactions to try
 
-On `/` (the starters on the empty page are the same list):
+On `/ask` (the starters on the empty page are the same list):
 
 1. **"When does merchant onboarding V2 launch?"** — the date moved mid-corpus. Kivi should
    answer December 5th, not November 14th, and cite the later dictation.
@@ -246,3 +249,27 @@ npm run seed         # re-ingest the shipped corpus
 
 `npm run setup` is the two together. Nothing else on the machine is touched; deleting the
 repository directory removes all state.
+
+## 12. The entity graph
+
+```bash
+npm run graph        # rebuilds graph_entities / graph_links from the current memories
+```
+
+Two model calls' worth of work: one pass lists the entities and resolves their names across
+spellings ("Rahul" → Rahul Iyer), then relations are assigned against that fixed list in
+parallel batches. Every link carries the id of the memory it came from and inherits its
+status, so a superseded fact gives a superseded edge and a forgotten one disappears. Hey Kivi
+reaches it through the `about()` tool. `npm run setup` builds it after seeding.
+
+## 13. The public demo (Azure Container Apps)
+
+```bash
+npm run demo:seed             # builds db/seed.db in a separate file; db/kivi.db is untouched
+bash scripts/deploy-azure.sh  # needs `az login` and GEMINI_API_KEY in .env
+```
+
+The image ships `db/seed.db`. At start-up, and again every UTC midnight, the server restores
+the live database from it and re-dates the corpus so "yesterday at 5pm" stays true
+(`src/lib/demo.ts`, enabled by `KIVI_DEMO_SEED`). Model-backed requests are capped per visitor
+(`KIVI_RATE_PER_10MIN`) and per day (`KIVI_DAILY_CAP`). One replica: SQLite has one writer.

@@ -6,6 +6,7 @@ import { generate } from '@/lib/gemini';
 import { extractBatch } from '@/lib/extract';
 import { insertDictation } from '@/lib/ingest';
 import type { Dictation } from '@/lib/types';
+import { clip, spendGuard } from '@/lib/guard';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
@@ -41,10 +42,12 @@ export async function POST(req: NextRequest) {
   const userId = body.userId || config.defaultUserId;
   ensureUser(userId);
 
-  const spoken: string = (body.spoken ?? '').toString().trim();
-  const app: string = body.app || 'slack';
+  const spoken = clip(body.spoken, 2000);
+  const app: string = clip(body.app, 40) || 'slack';
   const style: string = STYLES[body.style] ? body.style : 'message';
   if (!spoken) return NextResponse.json({ error: 'nothing was said' }, { status: 400 });
+  const limited = spendGuard(req);
+  if (limited) return limited;
 
   const system = [
     'You turn dictated speech into written text.',
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest) {
     user_id: userId,
     spoken_at: new Date().toISOString(),
     app,
-    context_label: body.context || null,
+    context_label: body.context ? clip(body.context, 120) : null,
     style,
     duration_ms: Math.round((spoken.split(/\s+/).length / 2.6) * 1000),
     raw_asr: spoken,

@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { NextResponse } from 'next/server';
 import { config } from '@/lib/config';
 import { db, dbSizeBytes, migrate } from '@/lib/db';
@@ -32,5 +34,23 @@ export async function GET() {
       .all(),
     dbBytes: dbSizeBytes(),
     lastIngest: d.prepare('SELECT * FROM ingest_runs ORDER BY started_at DESC LIMIT 1').get() ?? null,
+    evaluation: evalSummary(),
   });
+}
+
+/** The headline numbers of the shipped evaluation run, so no page has to hard-code them. */
+function evalSummary() {
+  try {
+    const r = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'eval', 'results', 'results.json'), 'utf8'));
+    return {
+      passed: r.summary.cases.passed,
+      total: r.summary.cases.total,
+      memoryPassed: r.summary.memory_state.passed,
+      memoryTotal: r.summary.memory_state.total,
+      costPerQuestion: r.summary.cost_usd.per_question,
+      p50Ms: r.summary.latency_ms.end_to_end_p50,
+    };
+  } catch {
+    return null;
+  }
 }

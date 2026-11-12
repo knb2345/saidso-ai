@@ -133,6 +133,11 @@ check('a parenthesis carrying real words survives',
 check('bare ids in the middle of a sentence are removed',
   stripCitationIds('Rahul owns the ledger migration d_00301 and it is due before launch.')
     === 'Rahul owns the ledger migration and it is due before launch.');
+check('stripping removes labelled citation parentheticals',
+  stripCitationIds('Here is the update you dictated yesterday (memory m_abc12, dictation d_00483).') ===
+    'Here is the update you dictated yesterday.');
+check('stripping removes citation labels left without ids',
+  stripCitationIds('Polished into three bullets (memory, dictation).') === 'Polished into three bullets.');
 check('stripping does not disturb an answer with no ids',
   stripCitationIds('You did not mention any enterprise pricing in your history.')
     === 'You did not mention any enterprise pricing in your history.');

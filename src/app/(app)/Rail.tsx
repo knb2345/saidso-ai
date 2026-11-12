@@ -13,21 +13,23 @@ export default function Rail() {
   }, [path]);
 
   const items = [
-    { href: '/', label: 'Hey Kivi', count: null as string | null },
+    { href: '/ask', label: 'Hey Kivi', count: null as string | null },
     { href: '/dictate', label: 'Dictation', count: null },
     { href: '/memory', label: 'What Kivi knows', count: stats ? String(stats.memories.active) : null },
+    { href: '/graph', label: 'Knowledge graph', count: null },
     { href: '/history', label: 'Dictation history', count: stats ? String(stats.dictations) : null },
     { href: '/inspect', label: 'Why', count: null },
+    { href: '/eval', label: 'Evaluation', count: null },
   ];
 
   return (
     <aside className="rail">
-      <div className="brand">
+      <Link href="/" className="brand" title="What is Kivi?">
         <div className="brand-mark">
           kiv<span>i</span>
         </div>
-        <div className="brand-sub">by sarvam</div>
-      </div>
+        <div className="brand-sub">about</div>
+      </Link>
 
       <nav className="nav">
         {items.map((i) => (

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, migrate } from '@/lib/db';
+import { clip, spendGuard } from '@/lib/guard';
 import { amendMemory, confirmMemory, evidenceFor, forgetMemory, getMemory, revisionsFor } from '@/lib/memory';
 
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,11 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       break;
     case 'amend':
       if (!body.statement) return NextResponse.json({ error: 'statement required' }, { status: 400 });
-      await amendMemory(id, body.statement, 'user', 'the person rewrote this on the memory page');
+      {
+        const limited = spendGuard(req);
+        if (limited) return limited;
+      }
+      await amendMemory(id, clip(body.statement, 600), 'user', 'the person rewrote this on the memory page');
       break;
     default:
       return NextResponse.json({ error: 'unknown action' }, { status: 400 });

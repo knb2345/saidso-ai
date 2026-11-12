@@ -68,6 +68,16 @@ export const config = {
   // How much the model deliberates before answering. "low" keeps Hey Kivi quick enough
   // to feel like speech; the work here is retrieval, not reasoning from scratch.
   thinkingLevel: (process.env.KIVI_THINKING_LEVEL || 'low').trim(),
+  /**
+   * Public-demo settings; all off unless set. KIVI_DEMO_SEED is a pristine database the
+   * live one is restored from daily (see demo.ts). The limits keep one visitor — or one
+   * script — from spending the model budget everyone else is using.
+   */
+  demoSeed: (process.env.KIVI_DEMO_SEED || '').trim(),
+  // Model-backed requests per visitor per 10 minutes; 0 disables the limit.
+  perVisitorLimit: Number(process.env.KIVI_RATE_PER_10MIN || 0),
+  // Model-backed requests across all visitors per UTC day; 0 disables the cap.
+  dailyCap: Number(process.env.KIVI_DAILY_CAP || 0),
 };
 
 // USD per 1M tokens. Update here if pricing moves; every number in the eval

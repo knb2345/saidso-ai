@@ -15,6 +15,16 @@ export function db(): Database.Database {
   return d;
 }
 
+/** Closes the connection so the file underneath can be replaced (see demo.ts). */
+export function closeDb() {
+  if (!_db) return;
+  try {
+    _db.close();
+  } finally {
+    _db = null;
+  }
+}
+
 export function migrate(): string[] {
   const d = db();
   d.exec(`CREATE TABLE IF NOT EXISTS _migrations (
